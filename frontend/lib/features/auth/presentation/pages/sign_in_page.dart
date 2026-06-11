@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'sign_up_page.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -322,7 +323,13 @@ class _SignInPageState extends State<SignInPage> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => _showFeatureUnavailable('Sign Up'),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const SignUpPage(),
+                          ),
+                        );
+                      },
                       child: const Text(
                         'Sign Up',
                         style: TextStyle(

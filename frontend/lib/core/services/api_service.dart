@@ -66,6 +66,34 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> signUp(String name, String email, String password) async {
+    final url = Uri.parse('$baseUrl/api/auth/signup');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'name': name, 'email': email, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          final message = errorData['detail'] ?? 'Sign up failed';
+          return {'success': false, 'message': message};
+        } catch (_) {
+          return {'success': false, 'message': 'Sign up failed with status ${response.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Failed to connect to backend: $e'
+      };
+    }
+  }
+
   Future<Map<String, dynamic>> checkHealth() async {
     final url = Uri.parse('$baseUrl/health');
     try {
@@ -80,3 +108,4 @@ class ApiService {
     }
   }
 }
+
