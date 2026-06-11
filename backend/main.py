@@ -77,4 +77,19 @@ async def sign_up(payload: SignUpRequest):
         }
     )
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ForgotPasswordResponse(BaseModel):
+    success: bool
+    message: str
+
+@app.post("/api/auth/forgot-password", response_model=ForgotPasswordResponse)
+async def forgot_password(payload: ForgotPasswordRequest):
+    return ForgotPasswordResponse(
+        success=True,
+        message="Instruksi pemulihan kata sandi telah dikirim ke email Anda."
+    )
+
+
 
