@@ -122,6 +122,34 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> savePersonalization(Map<String, dynamic> data) async {
+    final url = Uri.parse('$baseUrl/api/personalization');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          final message = errorData['detail'] ?? 'Failed to save personalization';
+          return {'success': false, 'message': message};
+        } catch (_) {
+          return {'success': false, 'message': 'Failed with status ${response.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Failed to connect to backend: $e'
+      };
+    }
+  }
+
   Future<Map<String, dynamic>> checkHealth() async {
     final url = Uri.parse('$baseUrl/health');
     try {
@@ -136,5 +164,6 @@ class ApiService {
     }
   }
 }
+
 
 

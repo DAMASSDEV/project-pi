@@ -91,5 +91,45 @@ async def forgot_password(payload: ForgotPasswordRequest):
         message="Instruksi pemulihan kata sandi telah dikirim ke email Anda."
     )
 
+class PersonalizationRequest(BaseModel):
+    email: EmailStr
+    name: str
+    dob: str
+    gender: str
+    height: float
+    weight: float
+    activity: str
+    conditions: list[str]
+    other_conditions: str | None = None
+    allergies: list[str]
+    restrictions: list[str]
+    goal: str
+    preferences: list[str]
+    notes: str | None = None
+
+class PersonalizationResponse(BaseModel):
+    success: bool
+    message: str
+
+@app.post("/api/personalization", response_model=PersonalizationResponse)
+async def save_personalization(payload: PersonalizationRequest):
+    if payload.email in users_db:
+        users_db[payload.email]["personalization"] = payload.model_dump()
+        return PersonalizationResponse(
+            success=True,
+            message="Data personalisasi berhasil disimpan."
+        )
+    users_db[payload.email] = {
+        "email": payload.email,
+        "name": payload.name,
+        "password": "",
+        "personalization": payload.model_dump()
+    }
+    return PersonalizationResponse(
+        success=True,
+        message="Data personalisasi berhasil disimpan."
+    )
+
+
 
 

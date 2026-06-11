@@ -3,6 +3,7 @@ import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'sign_up_page.dart';
 import 'forgot_password_page.dart';
+import '../../../personalization/presentation/pages/personalization_page.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -49,6 +50,11 @@ class _SignInPageState extends State<SignInPage> {
             content: Text('Login Berhasil! Selamat datang di Nutrify.'),
             behavior: SnackBarBehavior.floating,
             backgroundColor: AppTheme.primaryColor,
+          ),
+        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => PersonalizationPage(email: email),
           ),
         );
       } else {
