@@ -1,0 +1,35 @@
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.log
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+
+# Backend Python
+backend/__pycache__/
+backend/venv/
+backend/.env
+backend/.pytest_cache/
+backend/.cache/
+*.pyc
+*.pyo
+*.pyd
+
+# Flutter/Dart Build & Tooling (just in case they leak to root, though frontend/.gitignore handles its subdirectory)
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
