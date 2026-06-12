@@ -33,7 +33,7 @@ class _OnboardingPageState extends State<OnboardingPage>
       title: 'Analisis Nutrisi Akurat',
       subtitle: 'Pahami apa yang masuk ke tubuh Anda dengan data makro dan mikro nutrisi yang mendalam.',
       imagePath: 'assets/image2.png',
-      buttonText: 'Next',
+      buttonText: 'Lanjut',
       showSkip: true,
     ),
     OnboardingItem(

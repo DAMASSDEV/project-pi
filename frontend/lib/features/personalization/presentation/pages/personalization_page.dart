@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../dashboard/presentation/pages/dashboard_page.dart';
 
 class PersonalizationPage extends StatefulWidget {
   final String email;
@@ -165,6 +166,15 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
     if (mounted) {
       if (result['success'] == true) {
         _showTopNotification(true, 'Data personalisasi berhasil disimpan!');
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => DashboardPage(goal: _goal),
+              ),
+            );
+          }
+        });
       } else {
         _showTopNotification(
           false,
