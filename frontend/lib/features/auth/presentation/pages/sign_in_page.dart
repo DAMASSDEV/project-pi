@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import 'sign_up_page.dart';
 import 'forgot_password_page.dart';
 import '../../../personalization/presentation/pages/personalization_page.dart';
+import '../../../dashboard/presentation/pages/dashboard_page.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -52,11 +53,19 @@ class _SignInPageState extends State<SignInPage> {
             backgroundColor: AppTheme.primaryColor,
           ),
         );
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => PersonalizationPage(email: email),
-          ),
-        );
+        if (email == "you@example.com") {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const DashboardPage(),
+            ),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => PersonalizationPage(email: email),
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -116,7 +125,7 @@ class _SignInPageState extends State<SignInPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to continue your nutrition journey.',
+                  'Masuk untuk melanjutkan perjalanan nutrisi Anda.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -128,7 +137,7 @@ class _SignInPageState extends State<SignInPage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Email Address',
+                    'Alamat Email',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -169,7 +178,7 @@ class _SignInPageState extends State<SignInPage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Password',
+                    'Kata Sandi',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -224,7 +233,7 @@ class _SignInPageState extends State<SignInPage> {
                       );
                     },
                     child: const Text(
-                      'Forgot Password?',
+                      'Lupa Kata Sandi?',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppTheme.primaryColor,
@@ -252,7 +261,7 @@ class _SignInPageState extends State<SignInPage> {
                             color: Colors.white,
                           )
                         : const Text(
-                            'Sign In',
+                            'Masuk',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -273,7 +282,7 @@ class _SignInPageState extends State<SignInPage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'Or continue with',
+                        'Atau lanjutkan dengan',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade500,
@@ -294,7 +303,7 @@ class _SignInPageState extends State<SignInPage> {
                   width: double.infinity,
                   height: 56,
                   child: OutlinedButton(
-                    onPressed: () => _showFeatureUnavailable('Google Sign-In'),
+                    onPressed: () => _showFeatureUnavailable('Masuk dengan Google'),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: Colors.grey.shade300),
                       shape: RoundedRectangleBorder(
@@ -312,7 +321,7 @@ class _SignInPageState extends State<SignInPage> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Sign in with Google',
+                          'Masuk dengan Google',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -328,7 +337,7 @@ class _SignInPageState extends State<SignInPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'New to Nutrify? ',
+                      'Baru di Nutrify? ',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -344,7 +353,7 @@ class _SignInPageState extends State<SignInPage> {
                         );
                       },
                       child: const Text(
-                        'Sign Up',
+                        'Daftar',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppTheme.primaryColor,
