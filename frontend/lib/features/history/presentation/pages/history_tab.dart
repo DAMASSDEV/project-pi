@@ -24,22 +24,18 @@ class _HistoryTabState extends State<HistoryTab> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: _buildFilterDropdown(
-                      icon: Icons.calendar_today_rounded,
-                      label: _selectedRange,
-                      onTap: () {},
-                    ),
+                  _buildFilterDropdown(
+                    icon: Icons.calendar_today_rounded,
+                    label: _selectedRange,
+                    onTap: () {},
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildFilterDropdown(
-                      icon: Icons.access_time_rounded,
-                      label: _selectedTime,
-                      onTap: () {},
-                    ),
+                  const SizedBox(height: 12),
+                  _buildFilterDropdown(
+                    icon: Icons.access_time_rounded,
+                    label: _selectedTime,
+                    onTap: () {},
                   ),
                 ],
               ),
@@ -352,41 +348,37 @@ class _HistoryTabState extends State<HistoryTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          time,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade400,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isManual ? const Color(0xFFF1F3F5) : const Color(0xFFE8F6F1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            badgeText,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isManual ? Colors.grey.shade600 : AppTheme.primaryColor,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      time,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       name,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.neutralColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isManual ? const Color(0xFFF1F3F5) : const Color(0xFFE8F6F1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isManual ? Colors.grey.shade600 : AppTheme.primaryColor,
+                        ),
                       ),
                     ),
                   ],
