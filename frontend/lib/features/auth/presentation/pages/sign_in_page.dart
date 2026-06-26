@@ -7,6 +7,7 @@ import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/social_button.dart';
 import '../../../../core/widgets/top_toast.dart';
 import 'sign_up_page.dart';
+import 'forgot_password_page.dart';
 import '../../../personalization/presentation/pages/personalization_page.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 
@@ -149,7 +150,28 @@ class _SignInPageState extends State<SignInPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Lupa Kata Sandi?',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 PrimaryButton(
                   text: 'Masuk',
                   isLoading: _isLoading,

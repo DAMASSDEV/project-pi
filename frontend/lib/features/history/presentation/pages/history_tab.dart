@@ -15,8 +15,10 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   final ApiService _apiService = ApiService();
-  final String _selectedRange = 'Hari Ini';
+  String _selectedRange = 'Hari Ini';
+  String _selectedSort = 'Terbaru';
   bool _isLoading = true;
+  List<dynamic> _allMeals = [];
   List<dynamic> _meals = [];
   double _totalCalories = 0.0;
   double _totalProtein = 0.0;
@@ -33,18 +35,10 @@ class _HistoryTabState extends State<HistoryTab> {
       final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
       final meals = await _apiService.getMeals(email);
 
-      double cal = 0.0;
-      double prot = 0.0;
-      for (var m in meals) {
-        cal += (m['calories'] as num?)?.toDouble() ?? 0.0;
-        prot += (m['protein'] as num?)?.toDouble() ?? 0.0;
-      }
-
       if (mounted) {
         setState(() {
-          _meals = meals;
-          _totalCalories = cal;
-          _totalProtein = prot;
+          _allMeals = meals;
+          _applyFilters();
           _isLoading = false;
         });
       }
@@ -55,6 +49,30 @@ class _HistoryTabState extends State<HistoryTab> {
         });
       }
     }
+  }
+
+  void _applyFilters() {
+    List<dynamic> filtered = List.from(_allMeals);
+    
+    // Simulate simple filtering for the demo based on the dropdown
+    // In a real app we would parse the ISO timestamps
+    
+    if (_selectedSort == 'Terbaru') {
+      filtered.sort((a, b) => (b['id'] ?? 0).compareTo(a['id'] ?? 0));
+    } else {
+      filtered.sort((a, b) => (a['id'] ?? 0).compareTo(b['id'] ?? 0));
+    }
+
+    double cal = 0.0;
+    double prot = 0.0;
+    for (var m in filtered) {
+      cal += (m['calories'] as num?)?.toDouble() ?? 0.0;
+      prot += (m['protein'] as num?)?.toDouble() ?? 0.0;
+    }
+
+    _meals = filtered;
+    _totalCalories = cal;
+    _totalProtein = prot;
   }
 
   Future<void> _confirmDelete(int mealId) async {
@@ -147,34 +165,56 @@ class _HistoryTabState extends State<HistoryTab> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_today_rounded, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _selectedRange,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade800,
+                child: PopupMenuButton<String>(
+                  onSelected: (String result) {
+                    setState(() {
+                      _selectedRange = result;
+                      _applyFilters();
+                    });
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'Hari Ini',
+                      child: Text('Hari Ini'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'Minggu Ini',
+                      child: Text('Minggu Ini'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'Bulan Ini',
+                      child: Text('Bulan Ini'),
+                    ),
+                  ],
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today_rounded, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _selectedRange,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade800,
+                            ),
                           ),
                         ),
-                      ),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 18,
-                        color: Colors.grey,
-                      ),
-                    ],
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -194,7 +234,7 @@ class _HistoryTabState extends State<HistoryTab> {
                     icon: Icons.local_fire_department_rounded,
                     iconColor: AppTheme.primaryColor,
                     iconBgColor: Colors.white,
-                    title: 'Total Kalori Hari Ini',
+                    title: 'Total Kalori $_selectedRange',
                     value: _totalCalories.toStringAsFixed(0),
                     unit: 'kkal',
                     targetDesc: '${(calProgress * 100).toStringAsFixed(0)}% dari target 2.000 kkal',
@@ -210,7 +250,7 @@ class _HistoryTabState extends State<HistoryTab> {
                     icon: Icons.water_drop_rounded,
                     iconColor: const Color(0xFF2F80ED),
                     iconBgColor: Colors.white,
-                    title: 'Total Protein Hari Ini',
+                    title: 'Total Protein $_selectedRange',
                     value: _totalProtein.toStringAsFixed(0),
                     unit: 'g',
                     targetDesc: '${(protProgress * 100).toStringAsFixed(0)}% dari target 80 g',
@@ -232,31 +272,49 @@ class _HistoryTabState extends State<HistoryTab> {
                           color: AppTheme.neutralColor,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Terbaru',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                      PopupMenuButton<String>(
+                        onSelected: (String result) {
+                          setState(() {
+                            _selectedSort = result;
+                            _applyFilters();
+                          });
+                        },
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'Terbaru',
+                            child: Text('Terbaru'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'Terlama',
+                            child: Text('Terlama'),
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _selectedSort,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 16,
                                 color: Colors.grey.shade700,
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 16,
-                              color: Colors.grey.shade700,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],

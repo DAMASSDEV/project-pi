@@ -1,15 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000';
-    } else {
-      return 'http://127.0.0.1:8000';
-    }
+    return 'https://api-nutrify.damassdev.my.id';
   }
 
   final http.Client _client = http.Client();
@@ -209,6 +204,48 @@ class ApiService {
     final url = Uri.parse('$baseUrl/api/meals/$mealId');
     try {
       final response = await _client.delete(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    final url = Uri.parse('$baseUrl/api/auth/forgot-password');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          final message = errorData['detail'] ?? 'Gagal mengirim email pemulihan.';
+          return {'success': false, 'message': message};
+        } catch (_) {
+          return {'success': false, 'message': 'Gagal dengan status ${response.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Gagal terhubung ke server: $e'
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> getPersonalization(String email) async {
+    final url = Uri.parse('$baseUrl/api/personalization/${Uri.encodeComponent(email)}');
+    try {
+      final response = await _client.get(url);
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {

@@ -20,3 +20,10 @@ class SignUpResponse(BaseModel):
     message: str
     token: str | None = None
     user: dict | None = None
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ForgotPasswordResponse(BaseModel):
+    success: bool
+    message: str

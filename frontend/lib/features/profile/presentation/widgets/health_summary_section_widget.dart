@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class HealthSummarySectionWidget extends StatelessWidget {
-  const HealthSummarySectionWidget({super.key});
+  final String weight;
+  final String height;
+  final String goal;
+  final String activity;
+
+  const HealthSummarySectionWidget({
+    super.key,
+    required this.weight,
+    required this.height,
+    required this.goal,
+    required this.activity,
+  });
 
   Widget _buildSummaryItemCard({
     required IconData icon,
@@ -121,8 +132,8 @@ class HealthSummarySectionWidget extends StatelessWidget {
             Expanded(
               child: _buildSummaryItemCard(
                 icon: Icons.scale_rounded,
-                title: 'Weight',
-                value: '65',
+                title: 'Berat Badan',
+                value: weight,
                 unit: 'kg',
               ),
             ),
@@ -130,8 +141,8 @@ class HealthSummarySectionWidget extends StatelessWidget {
             Expanded(
               child: _buildSummaryItemCard(
                 icon: Icons.straighten_rounded,
-                title: 'Height',
-                value: '170',
+                title: 'Tinggi Badan',
+                value: height,
                 unit: 'cm',
               ),
             ),
@@ -140,14 +151,14 @@ class HealthSummarySectionWidget extends StatelessWidget {
         const SizedBox(height: 12),
         _buildSummaryItemRowCard(
           icon: Icons.track_changes_rounded,
-          title: 'Goal',
-          value: 'Maintain Weight',
+          title: 'Tujuan',
+          value: goal,
         ),
         const SizedBox(height: 12),
         _buildSummaryItemRowCard(
           icon: Icons.directions_run_rounded,
-          title: 'Activity Level',
-          value: 'Moderate',
+          title: 'Tingkat Aktivitas',
+          value: activity,
         ),
       ],
     );

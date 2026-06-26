@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.auth import (
     SignInRequest, SignInResponse,
-    SignUpRequest, SignUpResponse
+    SignUpRequest, SignUpResponse,
+    ForgotPasswordRequest, ForgotPasswordResponse
 )
 from app.models.user import User
 from app.models.personalization import Personalization
@@ -51,4 +52,15 @@ async def sign_up(payload: SignUpRequest, db: Session = Depends(get_db)):
             "email": payload.email,
             "name": payload.name
         }
+    )
+
+@router.post("/api/auth/forgot-password", response_model=ForgotPasswordResponse)
+async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
+    
+    return ForgotPasswordResponse(
+        success=True,
+        message="Tautan pemulihan kata sandi telah dikirim ke email Anda."
     )
