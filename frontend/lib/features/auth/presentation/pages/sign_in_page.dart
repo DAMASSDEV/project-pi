@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brand_header.dart';
+import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/social_button.dart';
+import '../../../../core/widgets/top_toast.dart';
 import 'sign_up_page.dart';
-import 'forgot_password_page.dart';
 import '../../../personalization/presentation/pages/personalization_page.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 
@@ -18,14 +22,13 @@ class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _apiService = ApiService();
-
-  bool _obscurePassword = true;
   bool _isLoading = false;
 
-  void _togglePasswordVisibility() {
-    setState(() {
-      _obscurePassword = !_obscurePassword;
-    });
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   Future<void> _handleSignIn() async {
@@ -46,14 +49,14 @@ class _SignInPageState extends State<SignInPage> {
 
     if (mounted) {
       if (result['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login Berhasil! Selamat datang di Nutrify.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
-        if (email == "you@example.com") {
+        showTopToast(context, 'Login Berhasil! Selamat datang di Nutrify.');
+        
+        bool hasPersonalization = false;
+        if (result['user'] != null && result['user']['has_completed_personalization'] == true) {
+          hasPersonalization = true;
+        }
+
+        if (hasPersonalization) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const DashboardPage(),
@@ -67,31 +70,17 @@ class _SignInPageState extends State<SignInPage> {
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Login Gagal! Periksa kembali email dan password Anda.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.redAccent,
-          ),
+        showTopToast(
+          context, 
+          result['message'] ?? 'Login Gagal! Periksa kembali email dan password Anda.',
+          isError: true,
         );
       }
     }
   }
 
   void _showFeatureUnavailable(String featureName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Fitur $featureName akan segera hadir!'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+    showTopToast(context, 'Fitur $featureName akan segera hadir!');
   }
 
   @override
@@ -107,31 +96,8 @@ class _SignInPageState extends State<SignInPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-                Image.asset(
-                  'assets/hero-bot.png',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Nutrify',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryColor,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Masuk untuk melanjutkan perjalanan nutrisi Anda.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
+                const BrandHeader(
+                  subtitle: 'Masuk untuk melanjutkan perjalanan nutrisi Anda.',
                 ),
                 const SizedBox(height: 40),
                 Align(
@@ -146,30 +112,14 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                CustomTextField(
                   controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'you@example.com',
-                    hintStyle: TextStyle(color: Colors.grey.shade400),
-                    prefixIcon: Icon(
-                      Icons.mail_outline_rounded,
-                      color: Colors.grey.shade600,
-                    ),
-                    fillColor: const Color(0xFFF8F9FA),
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+                  hintText: 'you@example.com',
+                  prefixIcon: Icons.mail_outline_rounded,
+                  keyboardType: TextInputType.text,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Email wajib diisi';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Format email tidak valid';
                     }
                     return null;
                   },
@@ -187,33 +137,11 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                CustomTextField(
                   controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    hintText: '••••••••',
-                    hintStyle: TextStyle(color: Colors.grey.shade400),
-                    prefixIcon: Icon(
-                      Icons.lock_outline_rounded,
-                      color: Colors.grey.shade600,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: Colors.grey.shade600,
-                      ),
-                      onPressed: _togglePasswordVisibility,
-                    ),
-                    fillColor: const Color(0xFFF8F9FA),
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+                  hintText: '••••••••',
+                  prefixIcon: Icons.lock_outline_rounded,
+                  isPassword: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Password wajib diisi';
@@ -221,54 +149,11 @@ class _SignInPageState extends State<SignInPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Lupa Kata Sandi?',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleSignIn,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                        : const Text(
-                            'Masuk',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                  ),
+                PrimaryButton(
+                  text: 'Masuk',
+                  isLoading: _isLoading,
+                  onPressed: _handleSignIn,
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -299,38 +184,9 @@ class _SignInPageState extends State<SignInPage> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: OutlinedButton(
-                    onPressed: () => _showFeatureUnavailable('Masuk dengan Google'),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey.shade300),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/icon/google.png',
-                          width: 20,
-                          height: 20,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Masuk dengan Google',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                SocialButton(
+                  text: 'Masuk dengan Google',
+                  onPressed: () => _showFeatureUnavailable('Masuk dengan Google'),
                 ),
                 const SizedBox(height: 32),
                 Row(

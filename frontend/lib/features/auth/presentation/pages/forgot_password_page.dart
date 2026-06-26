@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brand_header.dart';
+import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/primary_button.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -13,9 +16,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _apiService = ApiService();
-
   bool _isLoading = false;
   bool _isSuccess = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleResetPassword() async {
     if (!_formKey.currentState!.validate()) return;
@@ -46,12 +54,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    super.dispose();
   }
 
   @override
@@ -103,57 +105,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 24),
-            Center(
-              child: Container(
-                width: cardSize,
-                height: cardSize,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FAF7),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.06),
-                      blurRadius: 32,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(32),
-                child: Image.asset(
-                  'assets/hero-bot.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
+            const SizedBox(height: 20),
+            const BrandHeader(
+              subtitle: 'Jangan khawatir! Masukkan alamat email Anda di bawah ini untuk menerima instruksi pemulihan kata sandi.',
             ),
-            const SizedBox(height: 36),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Lupa Kata Sandi?',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.neutralColor,
-                  height: 1.3,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Jangan khawatir! Masukkan alamat email Anda di bawah ini untuk menerima instruksi pemulihan kata sandi.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                  height: 1.5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 40),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -166,24 +122,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               ),
             ),
             const SizedBox(height: 8),
-            TextFormField(
+            CustomTextField(
               controller: _emailController,
+              hintText: 'you@example.com',
+              prefixIcon: Icons.mail_outline_rounded,
               keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                hintText: 'you@example.com',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
-                prefixIcon: Icon(
-                  Icons.mail_outline_rounded,
-                  color: Colors.grey.shade600,
-                ),
-                fillColor: const Color(0xFFF8F9FA),
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-              ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Email wajib diisi';
@@ -195,32 +138,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               },
             ),
             const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleResetPassword,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                    : const Text(
-                        'Kirim Petunjuk Pemulihan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-              ),
+            PrimaryButton(
+              text: 'Kirim Petunjuk Pemulihan',
+              isLoading: _isLoading,
+              onPressed: _handleResetPassword,
             ),
             const SizedBox(height: 24),
           ],
@@ -286,28 +207,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
           ),
           const Spacer(flex: 4),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Kembali ke Login',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
+          PrimaryButton(
+            text: 'Kembali ke Login',
+            onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(height: 32),
         ],

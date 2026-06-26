@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static String get baseUrl {
@@ -48,7 +49,24 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['success'] == true) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('logged_in_email', email);
+          await prefs.setString('logged_in_username', email);
+          if (data['user'] != null) {
+            if (data['user']['name'] != null) {
+              await prefs.setString('logged_in_name', data['user']['name']);
+            }
+            if (data['user']['has_completed_personalization'] != null) {
+              await prefs.setBool(
+                'has_completed_personalization',
+                data['user']['has_completed_personalization'] == true,
+              );
+            }
+          }
+        }
+        return data;
       } else {
         try {
           final errorData = jsonDecode(response.body);
@@ -84,34 +102,6 @@ class ApiService {
           return {'success': false, 'message': message};
         } catch (_) {
           return {'success': false, 'message': 'Sign up failed with status ${response.statusCode}'};
-        }
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to connect to backend: $e'
-      };
-    }
-  }
-
-  Future<Map<String, dynamic>> forgotPassword(String email) async {
-    final url = Uri.parse('$baseUrl/api/auth/forgot-password');
-    try {
-      final response = await _client.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      } else {
-        try {
-          final errorData = jsonDecode(response.body);
-          final message = errorData['detail'] ?? 'Failed to send recovery email';
-          return {'success': false, 'message': message};
-        } catch (_) {
-          return {'success': false, 'message': 'Failed with status ${response.statusCode}'};
         }
       }
     } catch (e) {
@@ -163,7 +153,69 @@ class ApiService {
       return {'status': 'unhealthy', 'error': e.toString()};
     }
   }
+
+  Future<Map<String, dynamic>> scanFood(String foodName) async {
+    final url = Uri.parse('$baseUrl/api/meals/scan');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'food_name': foodName}),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> saveMeal(Map<String, dynamic> mealData) async {
+    final url = Uri.parse('$baseUrl/api/meals');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(mealData),
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'meal': decoded};
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<List<dynamic>> getMeals(String email) async {
+    final url = Uri.parse('$baseUrl/api/meals?email=${Uri.encodeComponent(email)}');
+    try {
+      final response = await _client.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteMeal(int mealId) async {
+    final url = Uri.parse('$baseUrl/api/meals/$mealId');
+    try {
+      final response = await _client.delete(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }
-
-
-
