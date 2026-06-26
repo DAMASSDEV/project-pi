@@ -34,5 +34,6 @@ build/
 .flutter-plugins-dependencies
 .packages
 
-design_system.md
-implementation_plan.md
+./design_system.md
+./implementation_plan.md
+*.md
