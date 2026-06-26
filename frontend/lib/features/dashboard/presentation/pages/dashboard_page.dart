@@ -41,21 +41,36 @@ class _DashboardPageState extends State<DashboardPage> {
     super.initState();
     final userGoal = widget.goal ?? 'Menjaga Berat Badan';
     goalText = userGoal;
-    if (userGoal == 'Menurunkan Berat Badan') {
+    _setTargetCalories(userGoal);
+    _fetchMeals();
+  }
+
+  void _setTargetCalories(String goal) {
+    if (goal == 'Menurunkan Berat Badan') {
       targetCalories = 1500;
-    } else if (userGoal == 'Menaikkan Berat Badan') {
+    } else if (goal == 'Menaikkan Berat Badan') {
       targetCalories = 2500;
-    } else if (userGoal == 'Meningkatkan Massa Otot') {
+    } else if (goal == 'Meningkatkan Massa Otot') {
       targetCalories = 2300;
     } else {
       targetCalories = 2000;
     }
-    _fetchMeals();
   }
 
   Future<void> _fetchMeals() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      
+      if (widget.goal == null) {
+        final savedGoal = prefs.getString('user_goal');
+        if (savedGoal != null && mounted) {
+          setState(() {
+            goalText = savedGoal;
+            _setTargetCalories(savedGoal);
+          });
+        }
+      }
+
       final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
       final apiService = ApiService();
       final meals = await apiService.getMeals(email);
@@ -276,34 +291,42 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildBottomNavigationBar() {
-    return Stack(
-      alignment: Alignment.topCenter,
-      clipBehavior: Clip.none,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 18),
-          child: CustomPaint(
-            painter: FloatingNotchedPainter(),
-            child: SizedBox(
-              height: 64,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(0, Icons.home_filled, 'Beranda'),
-                  _buildNavItem(1, Icons.chat_bubble_outline_rounded, 'Chatbot'),
-                  const SizedBox(width: 60),
-                  _buildNavItem(3, Icons.history_rounded, 'Riwayat'),
-                  _buildNavItem(4, Icons.person_outline_rounded, 'Akun'),
-                ],
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    if (isKeyboardVisible) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomPadding > 0 ? 6.0 : 0.0),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 18),
+            child: CustomPaint(
+              painter: FloatingNotchedPainter(),
+              child: SizedBox(
+                height: 64,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(0, Icons.home_filled, 'Beranda'),
+                    _buildNavItem(1, Icons.chat_bubble_outline_rounded, 'Chatbot'),
+                    const SizedBox(width: 60),
+                    _buildNavItem(3, Icons.history_rounded, 'Riwayat'),
+                    _buildNavItem(4, Icons.person_outline_rounded, 'Akun'),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        Positioned(
-          top: -6,
-          child: _buildCenterScanButton(),
-        ),
-      ],
+          Positioned(
+            top: -6,
+            child: _buildCenterScanButton(),
+          ),
+        ],
+      ),
     );
   }
 

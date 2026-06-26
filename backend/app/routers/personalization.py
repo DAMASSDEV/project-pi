@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.personalization import PersonalizationRequest, PersonalizationResponse
@@ -47,3 +47,29 @@ async def save_personalization(payload: PersonalizationRequest, db: Session = De
         success=True,
         message="Data personalisasi berhasil disimpan."
     )
+
+@router.get("/api/personalization/{email}")
+async def get_personalization(email: str, db: Session = Depends(get_db)):
+    db_personal = db.query(Personalization).filter(Personalization.email == email).first()
+    if not db_personal:
+        raise HTTPException(status_code=404, detail="Data personalisasi belum tersedia.")
+    
+    return {
+        "success": True,
+        "data": {
+            "email": db_personal.email,
+            "name": db_personal.name,
+            "dob": db_personal.dob,
+            "gender": db_personal.gender,
+            "height": db_personal.height,
+            "weight": db_personal.weight,
+            "activity": db_personal.activity,
+            "conditions": db_personal.conditions,
+            "other_conditions": db_personal.other_conditions,
+            "allergies": db_personal.allergies,
+            "restrictions": db_personal.restrictions,
+            "goal": db_personal.goal,
+            "preferences": db_personal.preferences,
+            "notes": db_personal.notes,
+        }
+    }

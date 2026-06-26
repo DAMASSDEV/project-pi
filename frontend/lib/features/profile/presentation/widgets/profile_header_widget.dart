@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class ProfileHeaderWidget extends StatelessWidget {
-  const ProfileHeaderWidget({super.key});
+  final String name;
+  final String email;
+
+  const ProfileHeaderWidget({
+    super.key,
+    required this.name,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,14 +31,19 @@ class ProfileHeaderWidget extends StatelessWidget {
                   ],
                 ),
                 border: Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
                   width: 2,
                 ),
               ),
-              child: const Icon(
-                Icons.person_rounded,
-                size: 56,
-                color: AppTheme.primaryColor,
+              child: Center(
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
               ),
             ),
             Positioned(
@@ -54,12 +66,21 @@ class ProfileHeaderWidget extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        const Text(
-          'John Doe',
-          style: TextStyle(
+        Text(
+          name.isNotEmpty ? name : 'Pengguna',
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: AppTheme.neutralColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          email,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade500,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 8),

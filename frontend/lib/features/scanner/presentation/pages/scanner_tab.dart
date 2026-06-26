@@ -32,7 +32,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
   int _demoImageIndex = 0;
 
   final List<Map<String, dynamic>> _zoomLevels = [
-    {'label': '0.5', 'value': 1.0},
+    {'label': '0.5', 'value': 0.5},
     {'label': '1x', 'value': 1.0},
     {'label': '2x', 'value': 2.0},
     {'label': '3x', 'value': 3.0},
@@ -749,58 +749,69 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Container(
-      color: Colors.black,
+      color: Colors.white,
       child: Stack(
         children: [
-          Positioned.fill(
-            child: _buildCameraPreview(),
-          ),
-          if (_showGrid)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: CameraGridPainter(),
-              ),
-            ),
-          if (_isScanning)
-            Positioned.fill(
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: bottomPadding + 10,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
               child: Container(
-                color: Colors.black.withValues(alpha: 0.7),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: CircularProgressIndicator(
-                          color: AppTheme.primaryColor,
-                          strokeWidth: 3,
-                          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+                color: Colors.black,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildCameraPreview(),
+                    if (_showGrid)
+                      CustomPaint(
+                        painter: CameraGridPainter(),
+                      ),
+                    if (_isScanning)
+                      Container(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: CircularProgressIndicator(
+                                  color: AppTheme.primaryColor,
+                                  strokeWidth: 3,
+                                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              const Text(
+                                'Menganalisis...',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'AI sedang mengidentifikasi makanan',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Menganalisis...',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'AI sedang mengidentifikasi makanan',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),
+          ),
           Positioned(
             top: topPadding + 12,
             left: 16,
