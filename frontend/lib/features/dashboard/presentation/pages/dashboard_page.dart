@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/skeleton.dart';
 
 class DashboardPage extends StatefulWidget {
   final String? goal;
@@ -15,6 +16,7 @@ class _DashboardPageState extends State<DashboardPage> {
   late String goalText;
   int _selectedCalendarDay = 11;
   int _waterIntakeCups = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -30,6 +32,13 @@ class _DashboardPageState extends State<DashboardPage> {
     } else {
       targetCalories = 2000;
     }
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   @override
@@ -82,14 +91,25 @@ class _DashboardPageState extends State<DashboardPage> {
               size: 22,
             ),
           ),
-          const Text(
-            'Nutrify',
-            style: TextStyle(
-              color: AppTheme.primaryColor,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/hero-bot.png',
+                height: 32,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Nutrify',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
           ),
           Container(
             width: 40,
@@ -114,6 +134,28 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildHomeTab() {
+    if (_isLoading) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildNutrientsScrollSkeleton(),
+            const SizedBox(height: 24),
+            _buildNutritionSummaryCardSkeleton(),
+            const SizedBox(height: 24),
+            _buildCalendarCardSkeleton(),
+            const SizedBox(height: 24),
+            _buildWaterTrackerCardSkeleton(),
+            const SizedBox(height: 24),
+            _buildFoodHistorySectionSkeleton(),
+            const SizedBox(height: 24),
+            _buildInsightSectionSkeleton(),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
@@ -131,6 +173,283 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 24),
           _buildInsightSection(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNutrientsScrollSkeleton() {
+    return SizedBox(
+      height: 140,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 170,
+            margin: const EdgeInsets.only(right: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade100),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Skeleton(width: 28, height: 28, borderRadius: 14),
+                    SizedBox(width: 8),
+                    Skeleton(width: 70, height: 12),
+                  ],
+                ),
+                SizedBox(height: 18),
+                Skeleton(width: 90, height: 22),
+                Spacer(),
+                Skeleton(width: 100, height: 10),
+                SizedBox(height: 8),
+                Skeleton(width: 138, height: 4, borderRadius: 2),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNutritionSummaryCardSkeleton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Skeleton(width: 120, height: 16),
+                    SizedBox(height: 6),
+                    Skeleton(width: 150, height: 10),
+                  ],
+                ),
+                Skeleton(width: 70, height: 24, borderRadius: 8),
+              ],
+            ),
+            SizedBox(height: 24),
+            Row(
+              children: [
+                Skeleton(width: 136, height: 136, borderRadius: 68),
+                SizedBox(width: 28),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Skeleton(width: double.infinity, height: 14),
+                      SizedBox(height: 12),
+                      Skeleton(width: double.infinity, height: 14),
+                      SizedBox(height: 12),
+                      Skeleton(width: double.infinity, height: 14),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalendarCardSkeleton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Skeleton(width: 100, height: 18),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Skeleton(width: 80, height: 24, borderRadius: 8),
+                Skeleton(width: 110, height: 16),
+              ],
+            ),
+            SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Skeleton(width: 24, height: 24, borderRadius: 12),
+                Skeleton(width: 24, height: 24, borderRadius: 12),
+                Skeleton(width: 24, height: 24, borderRadius: 12),
+                Skeleton(width: 24, height: 24, borderRadius: 12),
+                Skeleton(width: 24, height: 24, borderRadius: 12),
+                Skeleton(width: 24, height: 24, borderRadius: 12),
+                Skeleton(width: 24, height: 24, borderRadius: 12),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaterTrackerCardSkeleton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Skeleton(width: 36, height: 36, borderRadius: 18),
+                SizedBox(width: 12),
+                Skeleton(width: 80, height: 16),
+                Spacer(),
+                Skeleton(width: 100, height: 8, borderRadius: 4),
+              ],
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Skeleton(width: 80, height: 20),
+                    SizedBox(height: 6),
+                    Skeleton(width: 130, height: 10),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Skeleton(width: 24, height: 24, borderRadius: 12),
+                    SizedBox(width: 4),
+                    Skeleton(width: 24, height: 24, borderRadius: 12),
+                    SizedBox(width: 4),
+                    Skeleton(width: 24, height: 24, borderRadius: 12),
+                    SizedBox(width: 4),
+                    Skeleton(width: 24, height: 24, borderRadius: 12),
+                    SizedBox(width: 4),
+                    Skeleton(width: 24, height: 24, borderRadius: 12),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFoodHistorySectionSkeleton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Skeleton(width: 130, height: 18),
+              Skeleton(width: 80, height: 14),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildFoodHistoryCardSkeleton(),
+          const SizedBox(height: 14),
+          _buildFoodHistoryCardSkeleton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFoodHistoryCardSkeleton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: const Row(
+        children: [
+          Skeleton(width: 72, height: 72, borderRadius: 14),
+          SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Skeleton(width: 80, height: 10),
+                    Skeleton(width: 60, height: 14),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Skeleton(width: 140, height: 14),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Skeleton(width: 80, height: 18, borderRadius: 6),
+                    SizedBox(width: 8),
+                    Skeleton(width: 80, height: 18, borderRadius: 6),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightSectionSkeleton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FAF7),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppTheme.primaryColor.withOpacity(0.08),
+          ),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Skeleton(width: 120, height: 10),
+            SizedBox(height: 12),
+            Skeleton(width: double.infinity, height: 14),
+            SizedBox(height: 8),
+            Skeleton(width: 200, height: 14),
+          ],
+        ),
       ),
     );
   }
@@ -355,8 +674,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   alignment: Alignment.center,
                   children: [
                     SizedBox(
-                      width: 120,
-                      height: 120,
+                      width: 136,
+                      height: 136,
                       child: CustomPaint(
                         painter: DoughnutChartPainter(
                           calorieProgress: 1652 / targetCalories,
@@ -386,7 +705,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.grey.shade400,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 6),
                         Text(
                           'Target: ${targetCalories.toInt()}',
                           style: const TextStyle(
@@ -660,63 +979,25 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lightbulb_outline_rounded,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Insight & Rekomendasi',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.neutralColor,
-                  ),
-                ),
-              ],
+            const Text(
+              'TIPS NUTRISI HARI INI',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: AppTheme.primaryColor,
+                letterSpacing: 1.0,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               'Asupan protein anda masih dibawah target. Coba tambahkan sumber protein seperti telur, ayam, atau kacang-kacangan dimenu berikutnya.',
               style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
-                height: 1.5,
+                fontSize: 13.5,
+                color: Colors.grey.shade800,
+                height: 1.6,
                 fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'Lihat Rekomendasi Takaran',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
               ),
             ),
           ],
@@ -1033,33 +1314,34 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_filled, 'Beranda'),
-              _buildNavItem(1, Icons.chat_bubble_outline_rounded, 'Chatbot'),
-              _buildCenterScanButton(),
-              _buildNavItem(3, Icons.history_rounded, 'Riwayat'),
-              _buildNavItem(4, Icons.person_outline_rounded, 'Akun'),
-            ],
+    return Stack(
+      alignment: Alignment.topCenter,
+      clipBehavior: Clip.none,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 18),
+          child: CustomPaint(
+            painter: FloatingNotchedPainter(),
+            child: SizedBox(
+              height: 64,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(0, Icons.home_filled, 'Beranda'),
+                  _buildNavItem(1, Icons.chat_bubble_outline_rounded, 'Chatbot'),
+                  const SizedBox(width: 60),
+                  _buildNavItem(3, Icons.history_rounded, 'Riwayat'),
+                  _buildNavItem(4, Icons.person_outline_rounded, 'Akun'),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
+        Positioned(
+          top: -6,
+          child: _buildCenterScanButton(),
+        ),
+      ],
     );
   }
 
@@ -1098,23 +1380,59 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildCenterScanButton() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentIndex = 2;
-        });
-      },
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2DD4BF),
+            AppTheme.primaryColor,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2DD4BF).withOpacity(0.3),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(3),
       child: Container(
-        width: 48,
-        height: 48,
         decoration: const BoxDecoration(
-          color: AppTheme.primaryColor,
+          color: Colors.white,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          Icons.camera_alt_rounded,
-          color: Colors.white,
-          size: 24,
+        padding: const EdgeInsets.all(2),
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _currentIndex = 2;
+            });
+          },
+          child: Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryColor,
+                  Color(0xFF0F766E),
+                ],
+              ),
+            ),
+            child: const Icon(
+              Icons.camera_alt_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
         ),
       ),
     );
@@ -1145,6 +1463,81 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
+class FloatingNotchedPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    double cornerRadius = 24.0;
+    double notchRadius = 54.0;
+    double startNotchX = (size.width / 2) - notchRadius;
+    double endNotchX = (size.width / 2) + notchRadius;
+    double centerX = size.width / 2;
+    double depth = 42.0;
+    double controlPointX = notchRadius * 0.55;
+
+    final path = Path();
+    path.moveTo(0, cornerRadius);
+    path.quadraticBezierTo(0, 0, cornerRadius, 0);
+    path.lineTo(startNotchX, 0);
+
+    path.cubicTo(
+      centerX - controlPointX, 0,
+      centerX - controlPointX, depth,
+      centerX, depth,
+    );
+    path.cubicTo(
+      centerX + controlPointX, depth,
+      centerX + controlPointX, 0,
+      endNotchX, 0,
+    );
+
+    path.lineTo(size.width - cornerRadius, 0);
+    path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
+    path.lineTo(size.width, size.height - cornerRadius);
+    path.quadraticBezierTo(size.width, size.height, size.width - cornerRadius, size.height);
+    path.lineTo(cornerRadius, size.height);
+    path.quadraticBezierTo(0, size.height, 0, size.height - cornerRadius);
+    path.close();
+
+    canvas.drawShadow(
+      path,
+      const Color(0xFF000000),
+      12.0,
+      true,
+    );
+
+    final fillPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+
+    final borderPath = Path();
+    borderPath.moveTo(0, cornerRadius);
+    borderPath.quadraticBezierTo(0, 0, cornerRadius, 0);
+    borderPath.lineTo(startNotchX, 0);
+    borderPath.cubicTo(
+      centerX - controlPointX, 0,
+      centerX - controlPointX, depth,
+      centerX, depth,
+    );
+    borderPath.cubicTo(
+      centerX + controlPointX, depth,
+      centerX + controlPointX, 0,
+      endNotchX, 0,
+    );
+    borderPath.lineTo(size.width - cornerRadius, 0);
+    borderPath.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
+
+    final borderPaint = Paint()
+      ..color = AppTheme.primaryColor.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawPath(borderPath, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class DoughnutChartPainter extends CustomPainter {
   final double calorieProgress;
   final double carbPct;
@@ -1164,11 +1557,14 @@ class DoughnutChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     Offset center = Offset(size.width / 2, size.height / 2);
 
+    double outerRadius = size.width / 2 - 2;
+    double innerRadius = outerRadius - 14;
+
     Paint outerTrackPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.5
       ..color = const Color(0xFFF1F5F9);
-    canvas.drawCircle(center, 58, outerTrackPaint);
+    canvas.drawCircle(center, outerRadius, outerTrackPaint);
 
     Paint outerProgressPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -1179,14 +1575,13 @@ class DoughnutChartPainter extends CustomPainter {
     double outerStartAngle = -3.141592653589793 / 2;
     double outerSweepAngle = (calorieProgress.clamp(0.0, 1.0)) * 2 * 3.141592653589793;
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: 58),
+      Rect.fromCircle(center: center, radius: outerRadius),
       outerStartAngle,
       outerSweepAngle,
       false,
       outerProgressPaint,
     );
 
-    double innerRadius = 44;
     double innerStrokeWidth = 11;
     Rect innerRect = Rect.fromCircle(center: center, radius: innerRadius);
 
