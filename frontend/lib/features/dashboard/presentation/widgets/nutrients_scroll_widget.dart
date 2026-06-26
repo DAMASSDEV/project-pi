@@ -3,10 +3,29 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/skeleton.dart';
 
 class NutrientsScrollWidget extends StatelessWidget {
-  const NutrientsScrollWidget({super.key});
+  final double consumedCarbs;
+  final double consumedProtein;
+  final double consumedFat;
+  final double targetCarbs;
+  final double targetProtein;
+  final double targetFat;
+
+  const NutrientsScrollWidget({
+    super.key,
+    required this.consumedCarbs,
+    required this.consumedProtein,
+    required this.consumedFat,
+    required this.targetCarbs,
+    required this.targetProtein,
+    required this.targetFat,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final double carbProgress = targetCarbs > 0 ? (consumedCarbs / targetCarbs).clamp(0.0, 1.0) : 0.0;
+    final double proteinProgress = targetProtein > 0 ? (consumedProtein / targetProtein).clamp(0.0, 1.0) : 0.0;
+    final double fatProgress = targetFat > 0 ? (consumedFat / targetFat).clamp(0.0, 1.0) : 0.0;
+
     return SizedBox(
       height: 140,
       child: ListView(
@@ -15,26 +34,26 @@ class NutrientsScrollWidget extends StatelessWidget {
         children: [
           _buildNutrientCard(
             'Karbohidrat',
-            '210',
+            consumedCarbs.toStringAsFixed(0),
             'g',
-            '70% dari target 300 g',
-            0.70,
+            '${(carbProgress * 100).toStringAsFixed(0)}% dari target ${targetCarbs.toStringAsFixed(0)} g',
+            carbProgress,
             const Color(0xFFFFA500),
           ),
           _buildNutrientCard(
             'Protein',
-            '85',
+            consumedProtein.toStringAsFixed(0),
             'g',
-            '65% dari target 130 g',
-            0.65,
+            '${(proteinProgress * 100).toStringAsFixed(0)}% dari target ${targetProtein.toStringAsFixed(0)} g',
+            proteinProgress,
             const Color(0xFF8B5CF6),
           ),
           _buildNutrientCard(
             'Lemak',
-            '45',
+            consumedFat.toStringAsFixed(0),
             'g',
-            '50% dari target 90 g',
-            0.50,
+            '${(fatProgress * 100).toStringAsFixed(0)}% dari target ${targetFat.toStringAsFixed(0)} g',
+            fatProgress,
             Colors.redAccent,
           ),
         ],

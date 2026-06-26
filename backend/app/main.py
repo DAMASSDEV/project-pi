@@ -5,6 +5,7 @@ from app.routers.auth import router as auth_router
 from app.routers.chat import router as chat_router
 from app.routers.personalization import router as personalization_router
 from app.routers.health import router as health_router
+from app.routers.meal import router as meal_router
 import app.models
 
 app = FastAPI()
@@ -25,3 +26,4 @@ app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(personalization_router)
 app.include_router(health_router)
+app.include_router(meal_router)

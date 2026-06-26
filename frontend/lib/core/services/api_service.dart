@@ -172,7 +172,73 @@ class ApiService {
       return {'status': 'unhealthy', 'error': e.toString()};
     }
   }
+
+  Future<Map<String, dynamic>> scanFood(String foodName) async {
+    final url = Uri.parse('$baseUrl/api/meals/scan');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'food_name': foodName}),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> saveMeal(Map<String, dynamic> mealData) async {
+    final url = Uri.parse('$baseUrl/api/meals');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(mealData),
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'meal': decoded};
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<List<dynamic>> getMeals(String email) async {
+    final url = Uri.parse('$baseUrl/api/meals?email=${Uri.encodeComponent(email)}');
+    try {
+      final response = await _client.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteMeal(int mealId) async {
+    final url = Uri.parse('$baseUrl/api/meals/$mealId');
+    try {
+      final response = await _client.delete(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }
+
 
 
 

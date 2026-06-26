@@ -6,15 +6,29 @@ import '../../../../core/widgets/skeleton.dart';
 class NutritionSummaryCardWidget extends StatelessWidget {
   final double targetCalories;
   final String goalText;
+  final double consumedCalories;
+  final double consumedCarbs;
+  final double consumedProtein;
+  final double consumedFat;
 
   const NutritionSummaryCardWidget({
     super.key,
     required this.targetCalories,
     required this.goalText,
+    required this.consumedCalories,
+    required this.consumedCarbs,
+    required this.consumedProtein,
+    required this.consumedFat,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double totalGrams = consumedCarbs + consumedProtein + consumedFat;
+    final double carbPct = totalGrams > 0 ? (consumedCarbs / totalGrams * 0.9) : 0.45;
+    final double proteinPct = totalGrams > 0 ? (consumedProtein / totalGrams * 0.9) : 0.30;
+    final double fatPct = totalGrams > 0 ? (consumedFat / totalGrams * 0.9) : 0.15;
+    final double otherPct = 1.0 - (carbPct + proteinPct + fatPct);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
@@ -97,20 +111,20 @@ class NutritionSummaryCardWidget extends StatelessWidget {
                       height: 136,
                       child: CustomPaint(
                         painter: DoughnutChartPainter(
-                          calorieProgress: 1652 / targetCalories,
-                          carbPct: 0.45,
-                          proteinPct: 0.30,
-                          fatPct: 0.15,
-                          otherPct: 0.10,
+                          calorieProgress: targetCalories > 0 ? (consumedCalories / targetCalories).clamp(0.0, 1.0) : 0.0,
+                          carbPct: carbPct,
+                          proteinPct: proteinPct,
+                          fatPct: fatPct,
+                          otherPct: otherPct,
                         ),
                       ),
                     ),
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          '1.652',
-                          style: TextStyle(
+                        Text(
+                          consumedCalories.toStringAsFixed(0),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             color: AppTheme.neutralColor,
@@ -144,22 +158,22 @@ class NutritionSummaryCardWidget extends StatelessWidget {
                       _buildChartLegend(
                         const Color(0xFFFFA500),
                         'Karbohidrat',
-                        '210 g',
-                        '(45%)',
+                        '${consumedCarbs.toStringAsFixed(0)} g',
+                        '(${(carbPct * 100).toStringAsFixed(0)}%)',
                       ),
                       const SizedBox(height: 10),
                       _buildChartLegend(
                         const Color(0xFF8B5CF6),
                         'Protein',
-                        '85 g',
-                        '(30%)',
+                        '${consumedProtein.toStringAsFixed(0)} g',
+                        '(${(proteinPct * 100).toStringAsFixed(0)}%)',
                       ),
                       const SizedBox(height: 10),
                       _buildChartLegend(
                         Colors.redAccent,
                         'Lemak',
-                        '45 g',
-                        '(15%)',
+                        '${consumedFat.toStringAsFixed(0)} g',
+                        '(${(fatPct * 100).toStringAsFixed(0)}%)',
                       ),
                     ],
                   ),

@@ -4,10 +4,12 @@ import '../../../../core/widgets/skeleton.dart';
 
 class FoodHistorySectionWidget extends StatelessWidget {
   final VoidCallback onViewAll;
+  final List<dynamic> meals;
 
   const FoodHistorySectionWidget({
     super.key,
     required this.onViewAll,
+    required this.meals,
   });
 
   @override
@@ -41,25 +43,69 @@ class FoodHistorySectionWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _buildFoodHistoryCard(
-            'assets/image3.png',
-            'Nasi Goreng Spesial',
-            'Hari Ini, 13.00',
-            '450 kkal',
-            '4 Komponen',
-            'Karbo Tinggi',
-            const Color(0xFFFFA500),
-          ),
-          const SizedBox(height: 14),
-          _buildFoodHistoryCard(
-            'assets/image2.png',
-            'Avocado Chicken Salad',
-            'Hari Ini, 08.00',
-            '320 kkal',
-            '3 Komponen',
-            'Protein Tinggi',
-            const Color(0xFF8B5CF6),
-          ),
+          if (meals.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.restaurant_menu_rounded, color: Colors.grey.shade300, size: 40),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Belum ada makanan hari ini',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: meals.length > 2 ? 2 : meals.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 14),
+              itemBuilder: (context, index) {
+                final meal = meals[index];
+                final foodName = meal['food_name'] ?? 'Makanan';
+                final calories = meal['calories']?.toStringAsFixed(0) ?? '0';
+                final timestamp = meal['timestamp'] ?? 'Hari Ini';
+                final components = meal['components'] ?? '';
+                final isManual = meal['is_manual'] ?? false;
+                final imagePath = meal['image_path'] ?? 'assets/image3.png';
+                final healthScore = meal['health_score'] as int? ?? 80;
+
+                Color badgeColor = Colors.orange;
+                String typeBadge = 'Karbo Tinggi';
+                if (healthScore >= 85) {
+                  badgeColor = const Color(0xFF8B5CF6);
+                  typeBadge = 'Sangat Sehat';
+                } else if (healthScore >= 70) {
+                  badgeColor = AppTheme.primaryColor;
+                  typeBadge = 'Seimbang';
+                }
+
+                int componentCount = components.split(',').length;
+
+                return _buildFoodHistoryCard(
+                  imagePath,
+                  foodName,
+                  timestamp,
+                  '$calories kkal',
+                  isManual ? 'Manual Entry' : '$componentCount Komponen',
+                  typeBadge,
+                  badgeColor,
+                );
+              },
+            ),
         ],
       ),
     );
@@ -147,9 +193,9 @@ class FoodHistorySectionWidget extends StatelessWidget {
                         color: const Color(0xFFE8F6F1),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        '4 Komponen',
-                        style: TextStyle(
+                      child: Text(
+                        compBadge,
+                        style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,

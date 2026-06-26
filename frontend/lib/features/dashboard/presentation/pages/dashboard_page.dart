@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/api_service.dart';
 import '../../../chatbot/presentation/pages/chatbot_tab.dart';
 import '../../../history/presentation/pages/history_tab.dart';
 import '../../../profile/presentation/pages/profile_tab.dart';
+import '../../../scanner/presentation/pages/scanner_tab.dart';
 import '../widgets/nutrients_scroll_widget.dart';
 import '../widgets/nutrition_summary_card_widget.dart';
 import '../widgets/calendar_card_widget.dart';
@@ -27,6 +30,12 @@ class _DashboardPageState extends State<DashboardPage> {
   int _waterIntakeCups = 0;
   bool _isLoading = true;
 
+  List<dynamic> _meals = [];
+  double _consumedCalories = 0.0;
+  double _consumedCarbs = 0.0;
+  double _consumedProtein = 0.0;
+  double _consumedFat = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -41,13 +50,45 @@ class _DashboardPageState extends State<DashboardPage> {
     } else {
       targetCalories = 2000;
     }
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    _fetchMeals();
+  }
+
+  Future<void> _fetchMeals() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
+      final apiService = ApiService();
+      final meals = await apiService.getMeals(email);
+
+      double cal = 0.0;
+      double carb = 0.0;
+      double prot = 0.0;
+      double fat = 0.0;
+
+      for (var m in meals) {
+        cal += (m['calories'] as num?)?.toDouble() ?? 0.0;
+        carb += (m['carbs'] as num?)?.toDouble() ?? 0.0;
+        prot += (m['protein'] as num?)?.toDouble() ?? 0.0;
+        fat += (m['fat'] as num?)?.toDouble() ?? 0.0;
+      }
+
+      if (mounted) {
+        setState(() {
+          _meals = meals;
+          _consumedCalories = cal;
+          _consumedCarbs = carb;
+          _consumedProtein = prot;
+          _consumedFat = fat;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-    });
+    }
   }
 
   @override
@@ -64,7 +105,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   _buildHomeTab(),
                   const ChatbotTab(),
-                  _buildPlaceholderTab('Layar Pindai Kamera'),
+                  ScannerTab(
+                    onScanSaved: () {
+                      _fetchMeals();
+                      setState(() {
+                        _currentIndex = 0;
+                      });
+                    },
+                  ),
                   const HistoryTab(),
                   const ProfileTab(),
                 ],
@@ -165,42 +213,64 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const NutrientsScrollWidget(),
-          const SizedBox(height: 24),
-          NutritionSummaryCardWidget(
-            targetCalories: targetCalories,
-            goalText: goalText,
-          ),
-          const SizedBox(height: 24),
-          CalendarCardWidget(
-            selectedDay: _selectedCalendarDay,
-            onDaySelected: (day) {
-              setState(() {
-                _selectedCalendarDay = day;
-              });
-            },
-          ),
-          const SizedBox(height: 24),
-          WaterTrackerCardWidget(
-            waterIntakeCups: _waterIntakeCups,
-            onCupsChanged: (cups) {
-              setState(() {
-                _waterIntakeCups = cups;
-              });
-            },
-          ),
-          const SizedBox(height: 24),
-          FoodHistorySectionWidget(
-            onViewAll: () {},
-          ),
-          const SizedBox(height: 24),
-          const InsightSectionWidget(),
-        ],
+    return RefreshIndicator(
+      onRefresh: _fetchMeals,
+      color: AppTheme.primaryColor,
+      backgroundColor: Colors.white,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            NutrientsScrollWidget(
+              consumedCarbs: _consumedCarbs,
+              consumedProtein: _consumedProtein,
+              consumedFat: _consumedFat,
+              targetCarbs: 300.0,
+              targetProtein: 130.0,
+              targetFat: 90.0,
+            ),
+            const SizedBox(height: 24),
+            NutritionSummaryCardWidget(
+              targetCalories: targetCalories,
+              goalText: goalText,
+              consumedCalories: _consumedCalories,
+              consumedCarbs: _consumedCarbs,
+              consumedProtein: _consumedProtein,
+              consumedFat: _consumedFat,
+            ),
+            const SizedBox(height: 24),
+            CalendarCardWidget(
+              selectedDay: _selectedCalendarDay,
+              onDaySelected: (day) {
+                setState(() {
+                  _selectedCalendarDay = day;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+            WaterTrackerCardWidget(
+              waterIntakeCups: _waterIntakeCups,
+              onCupsChanged: (cups) {
+                setState(() {
+                  _waterIntakeCups = cups;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+            FoodHistorySectionWidget(
+              meals: _meals,
+              onViewAll: () {
+                setState(() {
+                  _currentIndex = 3;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+            const InsightSectionWidget(),
+          ],
+        ),
       ),
     );
   }
@@ -326,30 +396,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderTab(String label) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.construction_rounded,
-            size: 64,
-            color: Colors.grey.shade300,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade400,
-            ),
-          ),
-        ],
       ),
     );
   }
