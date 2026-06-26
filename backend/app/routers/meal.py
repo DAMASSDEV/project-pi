@@ -35,7 +35,7 @@ async def scan_meal(payload: dict):
             fat=2.0,
             health_score=92,
             components="Tahu, Nanas, Bengkuang, Kedondong, Kacang Tanah, Kuah Cuka Cabai",
-            description="Hidangan asinan segar rendah lemak dan kaya serat. Vitamin C tinggi dari buah-buahan segar membantu meningkatkan metabolisme tubuh.",
+            description="Hidangan asinan segar rendah lemak and kaya serat. Vitamin C tinggi dari buah-buahan segar membantu meningkatkan metabolisme tubuh.",
             image_path="assets/image2.png"
         )
     elif "nasi" in name_lower or "goreng" in name_lower:

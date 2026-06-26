@@ -17,6 +17,7 @@ class _ProfileTabState extends State<ProfileTab> {
   void _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('logged_in_email');
+    await prefs.remove('logged_in_username');
     await prefs.remove('logged_in_name');
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(

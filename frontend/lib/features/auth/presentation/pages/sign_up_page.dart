@@ -5,6 +5,7 @@ import '../../../../core/widgets/brand_header.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/social_button.dart';
+import '../../../../core/widgets/top_toast.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -50,33 +51,20 @@ class _SignUpPageState extends State<SignUpPage> {
 
     if (mounted) {
       if (result['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pendaftaran Berhasil! Silakan masuk.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
+        showTopToast(context, 'Pendaftaran Berhasil! Silakan masuk.');
         Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Pendaftaran Gagal! Silakan coba lagi.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.redAccent,
-          ),
+        showTopToast(
+          context,
+          result['message'] ?? 'Pendaftaran Gagal! Silakan coba lagi.',
+          isError: true,
         );
       }
     }
   }
 
   void _showFeatureUnavailable(String featureName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Fitur $featureName akan segera hadir!'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showTopToast(context, 'Fitur $featureName akan segera hadir!');
   }
 
   @override
@@ -155,13 +143,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   controller: _emailController,
                   hintText: 'you@example.com',
                   prefixIcon: Icons.mail_outline_rounded,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Email wajib diisi';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Format email tidak valid';
                     }
                     return null;
                   },

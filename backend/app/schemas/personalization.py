@@ -1,7 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 class PersonalizationRequest(BaseModel):
-    email: EmailStr
+    email: str
     name: str
     dob: str
     gender: str

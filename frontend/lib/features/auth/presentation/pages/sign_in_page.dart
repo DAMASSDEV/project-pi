@@ -5,8 +5,8 @@ import '../../../../core/widgets/brand_header.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/social_button.dart';
+import '../../../../core/widgets/top_toast.dart';
 import 'sign_up_page.dart';
-import 'forgot_password_page.dart';
 import '../../../personalization/presentation/pages/personalization_page.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 
@@ -49,14 +49,14 @@ class _SignInPageState extends State<SignInPage> {
 
     if (mounted) {
       if (result['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login Berhasil! Selamat datang di Nutrify.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
-        if (email == "you@example.com") {
+        showTopToast(context, 'Login Berhasil! Selamat datang di Nutrify.');
+        
+        bool hasPersonalization = false;
+        if (result['user'] != null && result['user']['has_completed_personalization'] == true) {
+          hasPersonalization = true;
+        }
+
+        if (hasPersonalization) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => const DashboardPage(),
@@ -70,24 +70,17 @@ class _SignInPageState extends State<SignInPage> {
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Login Gagal! Periksa kembali email dan password Anda.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.redAccent,
-          ),
+        showTopToast(
+          context, 
+          result['message'] ?? 'Login Gagal! Periksa kembali email dan password Anda.',
+          isError: true,
         );
       }
     }
   }
 
   void _showFeatureUnavailable(String featureName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Fitur $featureName akan segera hadir!'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showTopToast(context, 'Fitur $featureName akan segera hadir!');
   }
 
   @override
@@ -123,13 +116,10 @@ class _SignInPageState extends State<SignInPage> {
                   controller: _emailController,
                   hintText: 'you@example.com',
                   prefixIcon: Icons.mail_outline_rounded,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Email wajib diisi';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Format email tidak valid';
                     }
                     return null;
                   },
@@ -158,27 +148,6 @@ class _SignInPageState extends State<SignInPage> {
                     }
                     return null;
                   },
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Lupa Kata Sandi?',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 32),
                 PrimaryButton(

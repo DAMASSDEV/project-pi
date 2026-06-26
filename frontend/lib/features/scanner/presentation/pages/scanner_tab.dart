@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
@@ -11,51 +12,125 @@ class ScannerTab extends StatefulWidget {
   State<ScannerTab> createState() => _ScannerTabState();
 }
 
-class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateMixin {
+class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
   final ApiService _apiService = ApiService();
-  late AnimationController _animationController;
-  double _zoomScale = 1.0;
-  int _selectedPresetIndex = 0;
+  CameraController? _cameraController;
+  List<CameraDescription> _cameras = [];
+  bool _isCameraReady = false;
   bool _isFlashOn = false;
   bool _showGrid = true;
   bool _isScanning = false;
+  int _currentZoomIndex = 0;
+  bool _isDemoMode = false;
+  double _demoZoomScale = 1.0;
 
-  final List<Map<String, String>> _presets = [
-    {
-      'name': 'Soto Kuning Bogor',
-      'image': 'assets/image3.png',
-      'desc': 'Soto hangat gurih bersantan khas Bogor'
-    },
-    {
-      'name': 'Asinan Bogor',
-      'image': 'assets/image2.png',
-      'desc': 'Campuran buah dan sayur segar kuah pedas manis cuka'
-    },
-    {
-      'name': 'Nasi Goreng Spesial',
-      'image': 'assets/image1.png',
-      'desc': 'Nasi goreng lezat dengan telur mata sapi'
-    },
-    {
-      'name': 'Chicken Salad Bowl',
-      'image': 'assets/image2.png',
-      'desc': 'Salad dada ayam kaya protein dan serat tinggi'
-    }
+  final List<String> _demoImages = [
+    'assets/image1.png',
+    'assets/image2.png',
+    'assets/image3.png',
+  ];
+  int _demoImageIndex = 0;
+
+  final List<Map<String, dynamic>> _zoomLevels = [
+    {'label': '0.5', 'value': 1.0},
+    {'label': '1x', 'value': 1.0},
+    {'label': '2x', 'value': 2.0},
+    {'label': '3x', 'value': 3.0},
   ];
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    WidgetsBinding.instance.addObserver(this);
+    _currentZoomIndex = 1;
+    _initCamera();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraController?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    if (state == AppLifecycleState.inactive) {
+      _cameraController?.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      _initCamera();
+    }
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      _cameras = await availableCameras();
+      if (_cameras.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _isDemoMode = true;
+        });
+        return;
+      }
+
+      final backCamera = _cameras.firstWhere(
+        (cam) => cam.lensDirection == CameraLensDirection.back,
+        orElse: () => _cameras.first,
+      );
+
+      _cameraController = CameraController(
+        backCamera,
+        ResolutionPreset.high,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+
+      await _cameraController!.initialize();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isCameraReady = true;
+        _isDemoMode = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isDemoMode = true;
+        _isCameraReady = false;
+      });
+    }
+  }
+
+  Future<void> _setZoom(int index) async {
+    setState(() {
+      _currentZoomIndex = index;
+      _demoZoomScale = (_zoomLevels[index]['value'] as double);
+    });
+
+    if (_cameraController != null && _cameraController!.value.isInitialized) {
+      try {
+        final double maxZoom = await _cameraController!.getMaxZoomLevel();
+        final double minZoom = await _cameraController!.getMinZoomLevel();
+        final double targetZoom = (_zoomLevels[index]['value'] as double).clamp(minZoom, maxZoom);
+        await _cameraController!.setZoomLevel(targetZoom);
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _toggleFlash() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+
+    setState(() {
+      _isFlashOn = !_isFlashOn;
+    });
+
+    try {
+      await _cameraController!.setFlashMode(
+        _isFlashOn ? FlashMode.torch : FlashMode.off,
+      );
+    } catch (_) {}
   }
 
   void _showInstructionSheet() {
@@ -104,21 +179,21 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
                 Icons.wb_sunny_rounded,
                 Colors.amber,
                 'Pencahayaan yang Cukup',
-                'Pastikan makanan diterangi cahaya terang. Hindari memotret di ruangan yang gelap atau terdapat bayangan besar.',
+                'Pastikan makanan diterangi cahaya terang.',
               ),
               const SizedBox(height: 16),
               _buildInstructionItem(
                 Icons.center_focus_strong_rounded,
                 AppTheme.primaryColor,
                 'Fokus pada Satu Piring',
-                'Dekatkan kamera dan posisikan makanan tepat di tengah kotak panduan. Hindari objek lain masuk ke frame.',
+                'Posisikan makanan tepat di tengah frame.',
               ),
               const SizedBox(height: 16),
               _buildInstructionItem(
                 Icons.photo_camera_back_rounded,
                 Colors.blue,
                 'Sudut Foto 45 Derajat',
-                'Ambil foto dari kemiringan 45 derajat atau tegak lurus dari atas agar AI dapat mendeteksi kedalaman porsi makanan.',
+                'Ambil foto dari kemiringan 45 derajat atau tegak lurus dari atas.',
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -163,7 +238,7 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 20),
@@ -197,28 +272,46 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
     );
   }
 
-  Future<void> _startScanProcess() async {
+  Future<void> _captureAndAnalyze() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized || _isScanning) return;
+
     setState(() {
       _isScanning = true;
     });
 
-    final targetFood = _presets[_selectedPresetIndex]['name']!;
-    final result = await _apiService.scanFood(targetFood);
+    try {
+      if (_isFlashOn) {
+        await _cameraController!.setFlashMode(FlashMode.off);
+      }
 
-    await Future.delayed(const Duration(milliseconds: 1500));
+      final result = await _apiService.scanFood('Dummy Food');
 
-    if (!mounted) return;
+      await Future.delayed(const Duration(milliseconds: 1500));
 
-    setState(() {
-      _isScanning = false;
-    });
+      if (!mounted) return;
 
-    if (result['success'] == true) {
-      _showResultSheet(result);
-    } else {
+      setState(() {
+        _isScanning = false;
+      });
+
+      if (result['success'] == true) {
+        _showResultSheet(result);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Gagal memindai makanan'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isScanning = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'Gagal memindai makanan'),
+        const SnackBar(
+          content: Text('Terjadi kesalahan saat memproses foto'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -307,7 +400,7 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: gradeColor.withOpacity(0.1),
+                          color: gradeColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
@@ -446,9 +539,9 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.05),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.primaryColor.withOpacity(0.1)),
+                      border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
                     ),
                     child: Text(
                       description,
@@ -471,7 +564,7 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
 
                         final prefs = await SharedPreferences.getInstance();
                         final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
-                        
+
                         final mealData = {
                           'email': email,
                           'food_name': foodName,
@@ -488,7 +581,7 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
 
                         final res = await _apiService.saveMeal(mealData);
                         if (!mounted) return;
-                        
+
                         if (res['success'] == true) {
                           navigator.pop();
                           messenger.showSnackBar(
@@ -509,7 +602,6 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
                           );
                         }
                       },
-
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
@@ -573,9 +665,7 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
               children: [
                 Expanded(
                   flex: (pct * 100).toInt(),
-                  child: Container(
-                    color: color,
-                  ),
+                  child: Container(color: color),
                 ),
                 Expanded(
                   flex: ((1 - pct) * 100).toInt(),
@@ -589,404 +679,321 @@ class _ScannerTabState extends State<ScannerTab> with SingleTickerProviderStateM
     );
   }
 
+  Widget _buildCameraPreview() {
+    if (_isDemoMode) {
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            _demoImageIndex = (_demoImageIndex + 1) % _demoImages.length;
+          });
+        },
+        child: Container(
+          color: Colors.black,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Transform.scale(
+                scale: _demoZoomScale,
+                child: Image.asset(
+                  _demoImages[_demoImageIndex],
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 80,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'MODE DEMO',
+                      style: TextStyle(
+                        color: Colors.amber,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!_isCameraReady || _cameraController == null) {
+      return Container(
+        color: const Color(0xFF1A1A1A),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    }
+
+    return CameraPreview(_cameraController!);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final double cameraHeight = size.height * 0.42;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Container(
-      color: Colors.white,
-      child: Column(
+      color: Colors.black,
+      child: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          Positioned.fill(
+            child: _buildCameraPreview(),
+          ),
+          if (_showGrid)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: CameraGridPainter(),
+              ),
+            ),
+          if (_isScanning)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.7),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryColor,
+                          strokeWidth: 3,
+                          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Menganalisis...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'AI sedang mengidentifikasi makanan',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Positioned(
+            top: topPadding + 12,
+            left: 16,
+            right: 16,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                _buildTopControl(
+                  icon: _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                  isActive: _isFlashOn,
+                  onTap: _toggleFlash,
+                ),
+                Row(
                   children: [
-                    Text(
-                      'AI Scanner',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.neutralColor,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Pindai makanan Anda secara instan',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: _showInstructionSheet,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: const Icon(
-                      Icons.help_outline_rounded,
-                      size: 20,
-                      color: AppTheme.neutralColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: Container(
-                height: cameraHeight,
-                decoration: const BoxDecoration(
-                  color: Colors.black,
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Transform.scale(
-                      scale: _zoomScale,
-                      child: Center(
-                        child: Opacity(
-                          opacity: 0.85,
-                          child: Image.asset(
-                            _presets[_selectedPresetIndex]['image']!,
-                            height: cameraHeight,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (_showGrid)
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: CameraGridPainter(),
-                        ),
-                      ),
-                    Positioned(
-                      top: 16,
-                      left: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.lens, color: Colors.red, size: 8),
-                            SizedBox(width: 6),
-                            Text(
-                              'MOCK REC',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 16,
-                      right: 16,
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isFlashOn = !_isFlashOn;
-                              });
-                            },
-                            child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _showGrid = !_showGrid;
-                              });
-                            },
-                            child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                _showGrid ? Icons.grid_on_rounded : Icons.grid_off_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        final double verticalOffset = _animationController.value * cameraHeight;
-                        return Positioned(
-                          top: verticalOffset,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 3,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppTheme.primaryColor.withOpacity(0.1),
-                                  AppTheme.primaryColor,
-                                  AppTheme.primaryColor.withOpacity(0.1),
-                                ],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.primaryColor.withOpacity(0.5),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                    _buildTopControl(
+                      icon: _showGrid ? Icons.grid_on_rounded : Icons.grid_off_rounded,
+                      isActive: _showGrid,
+                      onTap: () {
+                        setState(() {
+                          _showGrid = !_showGrid;
+                        });
                       },
                     ),
-                    if (_isScanning)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.6),
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircularProgressIndicator(
-                                  color: AppTheme.primaryColor,
-                                  strokeWidth: 5,
-                                  backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
-                                ),
-                                const SizedBox(height: 20),
-                                const Text(
-                                  'Menganalisis Gizi...',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Mengidentifikasi makanan melalui AI model',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade400,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    Positioned(
-                      bottom: 16,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildZoomBtn(1.0, '1x'),
-                            _buildZoomBtn(1.8, '2x'),
-                            _buildZoomBtn(3.0, '3x'),
-                          ],
-                        ),
-                      ),
+                    const SizedBox(width: 12),
+                    _buildTopControl(
+                      icon: Icons.help_outline_rounded,
+                      onTap: _showInstructionSheet,
                     ),
                   ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Preset Makanan',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.neutralColor,
-                  ),
-                ),
-                Text(
-                  'Geser untuk simulasi',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.bold,
-                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemCount: _presets.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 14),
-              itemBuilder: (context, index) {
-                final isSelected = _selectedPresetIndex == index;
-                final item = _presets[index];
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedPresetIndex = index;
-                    });
-                  },
-                  child: Container(
-                    width: 140,
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFF0FAF7) : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected ? AppTheme.primaryColor : Colors.grey.shade200,
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              color: const Color(0xFFF8F9FA),
-                              width: double.infinity,
-                              child: Image.asset(
-                                item['image']!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          item['name']!,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.neutralColor,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          item['desc']!,
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey.shade400,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isScanning ? null : _startScanProcess,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPadding + 110,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(28),
                 ),
-                child: const Text(
-                  'Ambil Foto & Analisis AI',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(_zoomLevels.length, (index) {
+                    return _buildZoomChip(index);
+                  }),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPadding + 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(width: 60),
+                const Spacer(),
+                GestureDetector(
+                  onTap: _isScanning ? null : _captureAndAnalyze,
+                  child: Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 4,
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(3),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      decoration: BoxDecoration(
+                        shape: _isScanning ? BoxShape.rectangle : BoxShape.circle,
+                        borderRadius: _isScanning ? BorderRadius.circular(8) : null,
+                        color: _isScanning ? Colors.red : Colors.white,
+                      ),
+                      width: _isScanning ? 30 : double.infinity,
+                      height: _isScanning ? 30 : double.infinity,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    if (_cameras.length > 1 && _cameraController != null) {
+                      final currentDir = _cameraController!.description.lensDirection;
+                      final newCamera = _cameras.firstWhere(
+                        (cam) => cam.lensDirection != currentDir,
+                        orElse: () => _cameras.first,
+                      );
+                      _cameraController?.dispose();
+                      _cameraController = CameraController(
+                        newCamera,
+                        ResolutionPreset.high,
+                        enableAudio: false,
+                        imageFormatGroup: ImageFormatGroup.jpeg,
+                      );
+                      _cameraController!.initialize().then((_) {
+                        if (mounted) setState(() {});
+                      });
+                    }
+                  },
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.flip_camera_ios_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildZoomBtn(double val, String label) {
-    final active = _zoomScale == val;
+  Widget _buildTopControl({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isActive = false,
+  }) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _zoomScale = val;
-        });
-      },
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
-          color: active ? AppTheme.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: isActive
+              ? AppTheme.primaryColor.withValues(alpha: 0.85)
+              : Colors.black.withValues(alpha: 0.45),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isActive
+                ? AppTheme.primaryColor.withValues(alpha: 0.6)
+                : Colors.white.withValues(alpha: 0.08),
+            width: 1,
+          ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.white : Colors.grey,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZoomChip(int index) {
+    final isActive = _currentZoomIndex == index;
+    final label = _zoomLevels[index]['label'] as String;
+
+    return GestureDetector(
+      onTap: () => _setZoom(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        width: isActive ? 38 : 34,
+        height: isActive ? 38 : 34,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isActive
+              ? AppTheme.primaryColor
+              : Colors.transparent,
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.65),
+              fontSize: isActive ? 12 : 11,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -998,45 +1005,44 @@ class CameraGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.25)
-      ..strokeWidth = 1.0;
+      ..color = Colors.white.withValues(alpha: 0.2)
+      ..strokeWidth = 0.5;
 
     canvas.drawLine(Offset(size.width / 3, 0), Offset(size.width / 3, size.height), paint);
     canvas.drawLine(Offset(size.width * 2 / 3, 0), Offset(size.width * 2 / 3, size.height), paint);
-
     canvas.drawLine(Offset(0, size.height / 3), Offset(size.width, size.height / 3), paint);
     canvas.drawLine(Offset(0, size.height * 2 / 3), Offset(size.width, size.height * 2 / 3), paint);
 
     final cornerPaint = Paint()
-      ..color = Colors.white.withOpacity(0.7)
-      ..strokeWidth = 3.0
+      ..color = Colors.white.withValues(alpha: 0.6)
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
 
-    const double cornerLen = 20.0;
-    const double padding = 20.0;
+    const double cornerLen = 24.0;
+    const double pad = 24.0;
 
     final path1 = Path()
-      ..moveTo(padding, padding + cornerLen)
-      ..lineTo(padding, padding)
-      ..lineTo(padding + cornerLen, padding);
+      ..moveTo(pad, pad + cornerLen)
+      ..lineTo(pad, pad)
+      ..lineTo(pad + cornerLen, pad);
     canvas.drawPath(path1, cornerPaint);
 
     final path2 = Path()
-      ..moveTo(size.width - padding - cornerLen, padding)
-      ..lineTo(size.width - padding, padding)
-      ..lineTo(size.width - padding, padding + cornerLen);
+      ..moveTo(size.width - pad - cornerLen, pad)
+      ..lineTo(size.width - pad, pad)
+      ..lineTo(size.width - pad, pad + cornerLen);
     canvas.drawPath(path2, cornerPaint);
 
     final path3 = Path()
-      ..moveTo(padding, size.height - padding - cornerLen)
-      ..lineTo(padding, size.height - padding)
-      ..lineTo(padding + cornerLen, size.height - padding);
+      ..moveTo(pad, size.height - pad - cornerLen)
+      ..lineTo(pad, size.height - pad)
+      ..lineTo(pad + cornerLen, size.height - pad);
     canvas.drawPath(path3, cornerPaint);
 
     final path4 = Path()
-      ..moveTo(size.width - padding - cornerLen, size.height - padding)
-      ..lineTo(size.width - padding, size.height - padding)
-      ..lineTo(size.width - padding, size.height - padding - cornerLen);
+      ..moveTo(size.width - pad - cornerLen, size.height - pad)
+      ..lineTo(size.width - pad, size.height - pad)
+      ..lineTo(size.width - pad, size.height - pad - cornerLen);
     canvas.drawPath(path4, cornerPaint);
   }
 

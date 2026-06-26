@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
@@ -22,12 +23,28 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
   int _currentStep = 0;
   bool _isLoading = false;
 
-  final _nameController = TextEditingController(text: 'Danar');
+  final _nameController = TextEditingController();
   final _dobController = TextEditingController(text: '04/12/2005');
   String _gender = 'Perempuan';
   final _heightController = TextEditingController(text: '160');
   final _weightController = TextEditingController(text: '55');
   String _activity = 'Sedang';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserDisplayName();
+  }
+
+  Future<void> _loadUserDisplayName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('logged_in_name');
+    if (name != null && name.isNotEmpty) {
+      setState(() {
+        _nameController.text = name;
+      });
+    }
+  }
 
   final List<String> _availableConditions = [
     'Diabetes',
@@ -118,7 +135,7 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
   void _resetForm() {
     setState(() {
       _currentStep = 0;
-      _nameController.text = 'Danar';
+      _nameController.clear();
       _dobController.text = '04/12/2005';
       _gender = 'Perempuan';
       _heightController.text = '160';
@@ -169,13 +186,18 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
     if (mounted) {
       if (result['success'] == true) {
         _showTopNotification(true, 'Data personalisasi berhasil disimpan!');
-        Future.delayed(const Duration(milliseconds: 1500), () {
+        Future.delayed(const Duration(milliseconds: 1500), () async {
           if (mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => DashboardPage(goal: _goal),
-              ),
-            );
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('user_goal', _goal);
+            await prefs.setBool('has_completed_personalization', true);
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => DashboardPage(goal: _goal),
+                ),
+              );
+            }
           }
         });
       } else {

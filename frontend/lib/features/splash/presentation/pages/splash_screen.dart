@@ -3,6 +3,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../onboarding/presentation/pages/onboarding_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
+import '../../../personalization/presentation/pages/personalization_page.dart';
 
 
 class SplashScreen extends StatefulWidget {
@@ -112,7 +113,12 @@ class _SplashScreenState extends State<SplashScreen>
             final goal = prefs.getString('user_goal');
             Widget nextPage = const OnboardingPage();
             if (email != null) {
-              nextPage = DashboardPage(goal: goal);
+              final hasCompleted = prefs.getBool('has_completed_personalization') ?? false;
+              if (hasCompleted) {
+                nextPage = DashboardPage(goal: goal);
+              } else {
+                nextPage = PersonalizationPage(email: email);
+              }
             }
             if (mounted) {
               Navigator.of(context).pushReplacement(

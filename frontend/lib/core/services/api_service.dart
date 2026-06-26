@@ -53,8 +53,17 @@ class ApiService {
         if (data['success'] == true) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('logged_in_email', email);
-          if (data['user'] != null && data['user']['name'] != null) {
-            await prefs.setString('logged_in_name', data['user']['name']);
+          await prefs.setString('logged_in_username', email);
+          if (data['user'] != null) {
+            if (data['user']['name'] != null) {
+              await prefs.setString('logged_in_name', data['user']['name']);
+            }
+            if (data['user']['has_completed_personalization'] != null) {
+              await prefs.setBool(
+                'has_completed_personalization',
+                data['user']['has_completed_personalization'] == true,
+              );
+            }
           }
         }
         return data;
@@ -93,34 +102,6 @@ class ApiService {
           return {'success': false, 'message': message};
         } catch (_) {
           return {'success': false, 'message': 'Sign up failed with status ${response.statusCode}'};
-        }
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to connect to backend: $e'
-      };
-    }
-  }
-
-  Future<Map<String, dynamic>> forgotPassword(String email) async {
-    final url = Uri.parse('$baseUrl/api/auth/forgot-password');
-    try {
-      final response = await _client.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      } else {
-        try {
-          final errorData = jsonDecode(response.body);
-          final message = errorData['detail'] ?? 'Failed to send recovery email';
-          return {'success': false, 'message': message};
-        } catch (_) {
-          return {'success': false, 'message': 'Failed with status ${response.statusCode}'};
         }
       }
     } catch (e) {
@@ -238,7 +219,3 @@ class ApiService {
     }
   }
 }
-
-
-
-

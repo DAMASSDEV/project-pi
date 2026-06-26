@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String
 from app.core.database import Base
 
 class User(Base):
@@ -7,6 +7,3 @@ class User(Base):
     email = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     password = Column(String, nullable=False)
-    is_verified = Column(Boolean, default=False)
-    verification_token = Column(String, nullable=True)
-    reset_token = Column(String, nullable=True)
