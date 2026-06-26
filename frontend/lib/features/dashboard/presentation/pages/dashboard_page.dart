@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/skeleton.dart';
+import '../../../chatbot/presentation/pages/chatbot_tab.dart';
+import '../../../history/presentation/pages/history_tab.dart';
 
 class DashboardPage extends StatefulWidget {
   final String? goal;
@@ -54,9 +56,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 index: _currentIndex,
                 children: [
                   _buildHomeTab(),
-                  _buildPlaceholderTab('Layar Chatbot'),
+                  const ChatbotTab(),
                   _buildPlaceholderTab('Layar Pindai Kamera'),
-                  _buildPlaceholderTab('Layar Riwayat Log'),
+                  const HistoryTab(),
                   _buildPlaceholderTab('Layar Profil Akun'),
                 ],
               ),
