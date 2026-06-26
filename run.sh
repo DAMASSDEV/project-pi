@@ -1,7 +1,7 @@
 #!/bin/bash
 
 run_backend() {
-  cd backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  cd backend && ./venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 }
 
 run_frontend() {
@@ -14,7 +14,7 @@ run_mobile() {
 }
 
 run_all() {
-  cd backend && python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+  cd backend && ./venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
   BACKEND_PID=$!
   trap 'kill $BACKEND_PID; exit' INT TERM EXIT
   cd ../frontend && flutter run

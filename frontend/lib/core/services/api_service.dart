@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static String get baseUrl {
@@ -48,7 +49,15 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['success'] == true) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('logged_in_email', email);
+          if (data['user'] != null && data['user']['name'] != null) {
+            await prefs.setString('logged_in_name', data['user']['name']);
+          }
+        }
+        return data;
       } else {
         try {
           final errorData = jsonDecode(response.body);

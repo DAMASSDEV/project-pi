@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../onboarding/presentation/pages/onboarding_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../dashboard/presentation/pages/dashboard_page.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -102,17 +105,26 @@ class _SplashScreenState extends State<SplashScreen>
 
     _entryController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        Future.delayed(const Duration(milliseconds: 800), () {
+        Future.delayed(const Duration(milliseconds: 800), () async {
           if (mounted) {
-            Navigator.of(context).pushReplacement(
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => const OnboardingPage(),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                transitionDuration: const Duration(milliseconds: 800),
-              ),
-            );
+            final prefs = await SharedPreferences.getInstance();
+            final email = prefs.getString('logged_in_email');
+            final goal = prefs.getString('user_goal');
+            Widget nextPage = const OnboardingPage();
+            if (email != null) {
+              nextPage = DashboardPage(goal: goal);
+            }
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) => nextPage,
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  transitionDuration: const Duration(milliseconds: 800),
+                ),
+              );
+            }
           }
         });
       }
