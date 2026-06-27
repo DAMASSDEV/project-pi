@@ -24,11 +24,11 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
   bool _isLoading = false;
 
   final _nameController = TextEditingController();
-  final _dobController = TextEditingController(text: '04/12/2005');
-  String _gender = 'Perempuan';
-  final _heightController = TextEditingController(text: '160');
-  final _weightController = TextEditingController(text: '55');
-  String _activity = 'Sedang';
+  final _dobController = TextEditingController();
+  String? _gender;
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
+  String? _activity;
 
   @override
   void initState() {
@@ -55,16 +55,16 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
     'Maag / GERD',
     'Tidak Ada'
   ];
-  final Set<String> _selectedConditions = {'Tidak Ada'};
+  final Set<String> _selectedConditions = {};
   final _otherConditionsController = TextEditingController();
 
-  final List<String> _allergies = ['Udang'];
+  final List<String> _allergies = [];
   final _newAllergyController = TextEditingController();
 
-  final List<String> _restrictions = ['Santan', 'Gorengan', 'Daging Merah'];
+  final List<String> _restrictions = [];
   final _newRestrictionController = TextEditingController();
 
-  String _goal = 'Menjaga Berat Badan';
+  String? _goal;
   final List<String> _availablePreferences = [
     'Sayuran',
     'Buah',
@@ -73,12 +73,7 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
     'Telur',
     'Kacang-kacangan'
   ];
-  final Set<String> _selectedPreferences = {
-    'Sayuran',
-    'Buah',
-    'Ikan',
-    'Kacang-kacangan'
-  };
+  final Set<String> _selectedPreferences = {};
   final _notesController = TextEditingController();
 
   int _calculateAge(String dob) {
@@ -104,7 +99,7 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime(2005, 4, 12),
+      initialDate: DateTime(2000, 1, 1),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
@@ -121,6 +116,24 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
     if (_currentStep == 0) {
       if (!_formKey.currentState!.validate()) return;
     }
+    if (_currentStep == 1) {
+      if (_selectedConditions.isEmpty) {
+        _showTopNotification(
+          false,
+          'Pilih minimal satu kondisi kesehatan (atau "Tidak Ada").',
+        );
+        return;
+      }
+    }
+    if (_currentStep == 3) {
+      if (_goal == null || _goal!.isEmpty) {
+        _showTopNotification(
+          false,
+          'Silakan pilih tujuan utama Anda.',
+        );
+        return;
+      }
+    }
     setState(() {
       _currentStep++;
     });
@@ -136,21 +149,17 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
     setState(() {
       _currentStep = 0;
       _nameController.clear();
-      _dobController.text = '04/12/2005';
-      _gender = 'Perempuan';
-      _heightController.text = '160';
-      _weightController.text = '55';
-      _activity = 'Sedang';
+      _dobController.clear();
+      _gender = null;
+      _heightController.clear();
+      _weightController.clear();
+      _activity = null;
       _selectedConditions.clear();
-      _selectedConditions.add('Tidak Ada');
       _otherConditionsController.clear();
       _allergies.clear();
-      _allergies.add('Udang');
       _restrictions.clear();
-      _restrictions.addAll(['Santan', 'Gorengan', 'Daging Merah']);
-      _goal = 'Menjaga Berat Badan';
+      _goal = null;
       _selectedPreferences.clear();
-      _selectedPreferences.addAll(['Sayuran', 'Buah', 'Ikan', 'Kacang-kacangan']);
       _notesController.clear();
     });
   }
@@ -164,15 +173,15 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
       'email': widget.email,
       'name': _nameController.text.trim(),
       'dob': _dobController.text.trim(),
-      'gender': _gender,
-      'height': double.tryParse(_heightController.text) ?? 160.0,
-      'weight': double.tryParse(_weightController.text) ?? 55.0,
-      'activity': _activity,
+      'gender': _gender ?? 'Perempuan',
+      'height': double.tryParse(_heightController.text) ?? 0.0,
+      'weight': double.tryParse(_weightController.text) ?? 0.0,
+      'activity': _activity ?? 'Sedang',
       'conditions': _selectedConditions.toList(),
       'other_conditions': _otherConditionsController.text.trim(),
       'allergies': _allergies,
       'restrictions': _restrictions,
-      'goal': _goal,
+      'goal': _goal ?? 'Menjaga Berat Badan',
       'preferences': _selectedPreferences.toList(),
       'notes': _notesController.text.trim(),
     };
@@ -189,7 +198,7 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
         Future.delayed(const Duration(milliseconds: 1500), () async {
           if (mounted) {
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('user_goal', _goal);
+            await prefs.setString('user_goal', _goal ?? 'Menjaga Berat Badan');
             await prefs.setBool('has_completed_personalization', true);
             if (mounted) {
               Navigator.of(context).pushReplacement(
@@ -502,11 +511,11 @@ class _PersonalizationPageState extends State<PersonalizationPage> {
         final String hbStr = "$heightStr / $weightStr";
         return PersonalizationStepFive(
           ageStr: ageStr,
-          gender: _gender,
+          gender: _gender ?? 'Perempuan',
           hbStr: hbStr,
-          activity: _activity,
+          activity: _activity ?? 'Sedang',
           conditions: _selectedConditions.join(', '),
-          goal: _goal,
+          goal: _goal ?? 'Menjaga Berat Badan',
           isLoading: _isLoading,
           onSave: _saveData,
           onReset: _resetForm,

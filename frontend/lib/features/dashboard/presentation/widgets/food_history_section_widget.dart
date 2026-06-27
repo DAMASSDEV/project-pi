@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/skeleton.dart';
+import '../../../../core/services/date_helper.dart';
 
 class FoodHistorySectionWidget extends StatelessWidget {
   final VoidCallback onViewAll;
@@ -77,7 +78,8 @@ class FoodHistorySectionWidget extends StatelessWidget {
                 final meal = meals[index];
                 final foodName = meal['food_name'] ?? 'Makanan';
                 final calories = meal['calories']?.toStringAsFixed(0) ?? '0';
-                final timestamp = meal['timestamp'] ?? 'Hari Ini';
+                final rawTimestamp = meal['timestamp'] ?? 'Hari Ini';
+                final timestamp = formatFriendlyTimestamp(rawTimestamp);
                 final components = meal['components'] ?? '';
                 final isManual = meal['is_manual'] ?? false;
                 final imagePath = meal['image_path'] ?? 'assets/image3.png';

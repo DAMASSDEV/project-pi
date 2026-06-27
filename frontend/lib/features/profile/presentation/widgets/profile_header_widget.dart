@@ -4,11 +4,13 @@ import '../../../../core/theme/app_theme.dart';
 class ProfileHeaderWidget extends StatelessWidget {
   final String name;
   final String email;
+  final VoidCallback onEditTap;
 
   const ProfileHeaderWidget({
     super.key,
     required this.name,
     required this.email,
+    required this.onEditTap,
   });
 
   @override
@@ -49,17 +51,20 @@ class ProfileHeaderWidget extends StatelessWidget {
             Positioned(
               bottom: 0,
               right: 0,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.edit_rounded,
-                  size: 16,
-                  color: Colors.white,
+              child: GestureDetector(
+                onTap: onEditTap,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
