@@ -922,7 +922,24 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       );
     }
 
-    return CameraPreview(_cameraController!);
+    final size = MediaQuery.of(context).size;
+    final deviceRatio = size.width / size.height;
+    final previewSize = _cameraController!.value.previewSize!;
+    final previewRatio = previewSize.height / previewSize.width;
+    
+    double scale = 1.0;
+    if (deviceRatio > previewRatio) {
+      scale = deviceRatio / previewRatio;
+    } else {
+      scale = previewRatio / deviceRatio;
+    }
+
+    return Transform.scale(
+      scale: scale,
+      child: Center(
+        child: CameraPreview(_cameraController!),
+      ),
+    );
   }
 
   @override
@@ -938,15 +955,13 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
             left: 0,
             right: 0,
             top: 0,
-            bottom: bottomPadding + 10,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-              child: Container(
-                color: Colors.black,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _buildCameraPreview(),
+            bottom: 0,
+            child: Container(
+              color: Colors.black,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildCameraPreview(),
                     if (_showGrid)
                       CustomPaint(
                         painter: CameraGridPainter(),
@@ -993,7 +1008,6 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                 ),
               ),
             ),
-          ),
           Positioned(
             top: topPadding + 12,
             left: 16,

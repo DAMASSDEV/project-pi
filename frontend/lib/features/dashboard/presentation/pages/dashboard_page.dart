@@ -328,6 +328,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(height: 24),
             FoodHistorySectionWidget(
               meals: _meals,
+              onMealDeleted: _fetchMeals,
               onViewAll: () {
                 setState(() {
                   _currentIndex = 3;
