@@ -112,3 +112,38 @@ async def delete_meal(meal_id: int, db: Session = Depends(get_db)):
     db.delete(db_meal)
     db.commit()
     return {"success": True, "message": "Catatan makanan berhasil dihapus."}
+
+@router.put("/api/meals/{meal_id}")
+async def update_meal(meal_id: int, payload: dict, db: Session = Depends(get_db)):
+    db_meal = db.query(MealLog).filter(MealLog.id == meal_id).first()
+    if not db_meal:
+        raise HTTPException(status_code=404, detail="Meal log not found")
+    
+    if "food_name" in payload:
+        db_meal.food_name = payload["food_name"]
+    if "calories" in payload:
+        db_meal.calories = payload["calories"]
+    if "protein" in payload:
+        db_meal.protein = payload["protein"]
+    if "carbs" in payload:
+        db_meal.carbs = payload["carbs"]
+    if "fat" in payload:
+        db_meal.fat = payload["fat"]
+    if "components" in payload:
+        db_meal.components = payload["components"]
+        
+    db.commit()
+    db.refresh(db_meal)
+    return {"success": True, "meal": {
+        "id": db_meal.id,
+        "email": db_meal.email,
+        "food_name": db_meal.food_name,
+        "calories": db_meal.calories,
+        "protein": db_meal.protein,
+        "carbs": db_meal.carbs,
+        "fat": db_meal.fat,
+        "components": db_meal.components,
+        "timestamp": db_meal.timestamp,
+        "image_path": db_meal.image_path,
+        "is_manual": db_meal.is_manual
+    }}
