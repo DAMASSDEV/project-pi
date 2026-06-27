@@ -5,6 +5,7 @@ import '../../../../core/services/api_service.dart';
 import '../widgets/history_summary_card.dart';
 import '../widgets/food_log_card.dart';
 import '../widgets/history_insight_card.dart';
+import '../../../../core/services/date_helper.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -360,7 +361,8 @@ class _HistoryTabState extends State<HistoryTab> {
                             final protein = meal['protein']?.toStringAsFixed(0) ?? '0';
                             final carbs = meal['carbs']?.toStringAsFixed(0) ?? '0';
                             final fat = meal['fat']?.toStringAsFixed(0) ?? '0';
-                            final timestamp = meal['timestamp'] ?? 'Hari Ini';
+                            final rawTimestamp = meal['timestamp'] ?? 'Hari Ini';
+                            final timestamp = formatFriendlyTimestamp(rawTimestamp);
                             final components = meal['components'] ?? '';
                             final isManual = meal['is_manual'] ?? false;
                             final imagePath = meal['image_path'] ?? 'assets/image3.png';

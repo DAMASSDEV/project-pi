@@ -110,6 +110,10 @@ class ApiService {
   Future<Map<String, dynamic>> savePersonalization(Map<String, dynamic> data) async {
     final url = Uri.parse('$baseUrl/api/personalization');
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final emailKey = data['email'] ?? 'default_user';
+      await prefs.setString('cached_personalization_$emailKey', jsonEncode(data));
+
       final response = await _client.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -247,11 +251,32 @@ class ApiService {
     try {
       final response = await _client.get(url);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final res = jsonDecode(response.body) as Map<String, dynamic>;
+        if (res['success'] == true && res['data'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('cached_personalization_$email', jsonEncode(res['data']));
+        }
+        return res;
       } else {
+        final prefs = await SharedPreferences.getInstance();
+        final cached = prefs.getString('cached_personalization_$email');
+        if (cached != null) {
+          return {
+            'success': true,
+            'data': jsonDecode(cached) as Map<String, dynamic>,
+          };
+        }
         return {'success': false, 'message': 'Status code ${response.statusCode}'};
       }
     } catch (e) {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('cached_personalization_$email');
+      if (cached != null) {
+        return {
+          'success': true,
+          'data': jsonDecode(cached) as Map<String, dynamic>,
+        };
+      }
       return {'success': false, 'message': e.toString()};
     }
   }

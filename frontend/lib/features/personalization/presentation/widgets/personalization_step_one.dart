@@ -5,10 +5,10 @@ class PersonalizationStepOne extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController nameController;
   final TextEditingController dobController;
-  final String gender;
+  final String? gender;
   final TextEditingController heightController;
   final TextEditingController weightController;
-  final String activity;
+  final String? activity;
   final VoidCallback onNext;
   final VoidCallback onSelectDate;
   final ValueChanged<String?> onGenderChanged;
@@ -173,7 +173,7 @@ class PersonalizationStepOne extends StatelessWidget {
                     controller: dobController,
                     readOnly: true,
                     onTap: onSelectDate,
-                    decoration: _getInputDecoration('mm/dd/yyyy').copyWith(
+                    decoration: _getInputDecoration('Pilih tanggal lahir').copyWith(
                       suffixIcon: const Icon(
                         Icons.calendar_today_outlined,
                         size: 18,
@@ -191,7 +191,11 @@ class PersonalizationStepOne extends StatelessWidget {
                   _buildLabel('JENIS KELAMIN'),
                   DropdownButtonFormField<String>(
                     value: gender,
-                    decoration: _getInputDecoration(''),
+                    decoration: _getInputDecoration('Pilih jenis kelamin'),
+                    hint: Text(
+                      'Pilih jenis kelamin',
+                      style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                    ),
                     items: ['Laki-laki', 'Perempuan'].map((g) {
                       return DropdownMenuItem(
                         value: g,
@@ -199,6 +203,12 @@ class PersonalizationStepOne extends StatelessWidget {
                       );
                     }).toList(),
                     onChanged: onGenderChanged,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Jenis kelamin wajib dipilih';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -211,7 +221,7 @@ class PersonalizationStepOne extends StatelessWidget {
                             TextFormField(
                               controller: heightController,
                               keyboardType: TextInputType.number,
-                              decoration: _getInputDecoration('').copyWith(
+                              decoration: _getInputDecoration('Tinggi').copyWith(
                                 suffixText: 'cm',
                                 suffixStyle: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -240,7 +250,7 @@ class PersonalizationStepOne extends StatelessWidget {
                             TextFormField(
                               controller: weightController,
                               keyboardType: TextInputType.number,
-                              decoration: _getInputDecoration('').copyWith(
+                              decoration: _getInputDecoration('Berat').copyWith(
                                 suffixText: 'kg',
                                 suffixStyle: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -266,7 +276,11 @@ class PersonalizationStepOne extends StatelessWidget {
                   _buildLabel('TINGKAT AKTIVITAS'),
                   DropdownButtonFormField<String>(
                     value: activity,
-                    decoration: _getInputDecoration(''),
+                    decoration: _getInputDecoration('Pilih tingkat aktivitas'),
+                    hint: Text(
+                      'Pilih tingkat aktivitas',
+                      style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                    ),
                     items: ['Sangat Jarang', 'Jarang', 'Sedang', 'Aktif', 'Sangat Aktif'].map((a) {
                       return DropdownMenuItem(
                         value: a,
@@ -274,6 +288,12 @@ class PersonalizationStepOne extends StatelessWidget {
                       );
                     }).toList(),
                     onChanged: onActivityChanged,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Tingkat aktivitas wajib dipilih';
+                      }
+                      return null;
+                    },
                   ),
                 ],
               ),

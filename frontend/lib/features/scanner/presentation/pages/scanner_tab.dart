@@ -272,9 +272,189 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
     );
   }
 
+  void _showFoodSelectorSheet() {
+    final textController = TextEditingController();
+    String? selectedPreset;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Pindai Makanan Cerdas AI',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.neutralColor,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Pilih makanan yang terdeteksi di kamera atau ketikkan namanya secara manual.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'PILIHAN CEPAT (PRESET)',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.grey,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      'Soto Kuning Bogor',
+                      'Asinan Bogor',
+                      'Nasi Goreng Spesial',
+                      'Chicken Salad Bowl',
+                    ].map((food) {
+                      final isSel = selectedPreset == food;
+                      return ChoiceChip(
+                        label: Text(food),
+                        selected: isSel,
+                        selectedColor: const Color(0xFFF0FAF7),
+                        backgroundColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: isSel ? AppTheme.primaryColor : Colors.grey.shade700,
+                          fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(
+                            color: isSel ? AppTheme.primaryColor : Colors.grey.shade300,
+                          ),
+                        ),
+                        showCheckmark: false,
+                        onSelected: (selected) {
+                          setSheetState(() {
+                            if (selected) {
+                              selectedPreset = food;
+                              textController.clear();
+                            } else {
+                              selectedPreset = null;
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'ATAU KETIK NAMA MAKANAN LAIN',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.grey,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: textController,
+                    decoration: InputDecoration(
+                      hintText: 'Contoh: Sate Ayam, Gado-gado, dll.',
+                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                      fillColor: const Color(0xFFF8F9FA),
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (val) {
+                      if (val.trim().isNotEmpty && selectedPreset != null) {
+                        setSheetState(() {
+                          selectedPreset = null;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final String foodName = selectedPreset ?? textController.text.trim();
+                        if (foodName.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Silakan pilih atau ketik nama makanan.'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.pop(context);
+                        _startAnalysisFlow(foodName);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Mulai Analisis AI',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _captureAndAnalyze() async {
     if (_cameraController == null || !_cameraController!.value.isInitialized || _isScanning) return;
+    _showFoodSelectorSheet();
+  }
 
+  Future<void> _startAnalysisFlow(String foodName) async {
     setState(() {
       _isScanning = true;
     });
@@ -284,7 +464,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
         await _cameraController!.setFlashMode(FlashMode.off);
       }
 
-      final result = await _apiService.scanFood('Dummy Food');
+      final result = await _apiService.scanFood(foodName);
 
       await Future.delayed(const Duration(milliseconds: 1500));
 
@@ -560,7 +740,9 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                       onPressed: () async {
                         final navigator = Navigator.of(context);
                         final messenger = ScaffoldMessenger.of(context);
-                        final timeString = TimeOfDay.now().format(context);
+                        final now = DateTime.now();
+                        final timeString = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+                        final timestamp = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} $timeString";
 
                         final prefs = await SharedPreferences.getInstance();
                         final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
@@ -574,7 +756,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                           'fat': fat,
                           'health_score': score,
                           'components': components,
-                          'timestamp': 'Hari Ini, $timeString',
+                          'timestamp': timestamp,
                           'image_path': imgPath,
                           'is_manual': false,
                         };

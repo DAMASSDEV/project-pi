@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class PersonalizationStepFour extends StatelessWidget {
-  final String goal;
+  final String? goal;
   final List<String> availablePreferences;
   final Set<String> selectedPreferences;
   final TextEditingController notesController;
@@ -97,7 +97,11 @@ class PersonalizationStepFour extends StatelessWidget {
                 _buildLabel('TUJUAN UTAMA'),
                 DropdownButtonFormField<String>(
                   value: goal,
-                  decoration: _getInputDecoration(''),
+                  decoration: _getInputDecoration('Pilih tujuan utama'),
+                  hint: Text(
+                    'Pilih tujuan utama',
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                  ),
                   items: [
                     'Menjaga Berat Badan',
                     'Menurunkan Berat Badan',
@@ -110,6 +114,12 @@ class PersonalizationStepFour extends StatelessWidget {
                     );
                   }).toList(),
                   onChanged: onGoalChanged,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Tujuan utama wajib dipilih';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
                 _buildLabel('PREFERENSI MAKANAN'),

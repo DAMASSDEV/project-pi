@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/top_toast.dart';
+import '../pages/notifications_page.dart';
+import '../pages/privacy_security_page.dart';
+import '../pages/help_center_page.dart';
+import '../pages/connected_devices_page.dart';
+import '../pages/about_nutrify_page.dart';
 
 class SettingsMenuSectionWidget extends StatelessWidget {
   final Map<String, dynamic>? personalizationData;
@@ -209,75 +214,6 @@ class SettingsMenuSectionWidget extends StatelessWidget {
     );
   }
 
-  void _showAboutNutrify(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.eco_rounded, color: AppTheme.primaryColor, size: 24),
-              SizedBox(width: 8),
-              Text(
-                'Tentang Nutrify',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.neutralColor,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nutrify v1.0.0',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.neutralColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Nutrify adalah aplikasi pemantau nutrisi cerdas berbasis AI yang membantu Anda menjalani pola hidup sehat dengan memindai dan melacak asupan makanan harian.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '© 2026 Nutrify. All rights reserved.',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Tutup',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildMenuTile({
     required IconData icon,
     required String title,
@@ -366,7 +302,12 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                     title: 'Connected Devices',
                     iconColor: AppTheme.primaryColor,
                     iconBgColor: AppTheme.secondaryColor,
-                    onTap: () => showTopToast(context, 'Fitur Connected Devices akan segera hadir!'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ConnectedDevicesPage()),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -400,7 +341,12 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                     title: 'Notifications',
                     iconColor: Colors.grey.shade700,
                     iconBgColor: const Color(0xFFF1F3F5),
-                    onTap: () => showTopToast(context, 'Fitur Notifikasi akan segera hadir!'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                      );
+                    },
                   ),
                   const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
                   _buildMenuTile(
@@ -408,7 +354,12 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                     title: 'Privacy & Security',
                     iconColor: Colors.grey.shade700,
                     iconBgColor: const Color(0xFFF1F3F5),
-                    onTap: () => showTopToast(context, 'Fitur Privacy & Security akan segera hadir!'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PrivacySecurityPage()),
+                      );
+                    },
                   ),
                   const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
                   _buildMenuTile(
@@ -416,7 +367,12 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                     title: 'Help Center',
                     iconColor: Colors.grey.shade700,
                     iconBgColor: const Color(0xFFF1F3F5),
-                    onTap: () => showTopToast(context, 'Fitur Help Center akan segera hadir!'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HelpCenterPage()),
+                      );
+                    },
                   ),
                   const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
                   _buildMenuTile(
@@ -424,7 +380,12 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                     title: 'About Nutrify',
                     iconColor: Colors.grey.shade700,
                     iconBgColor: const Color(0xFFF1F3F5),
-                    onTap: () => _showAboutNutrify(context),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AboutNutrifyPage()),
+                      );
+                    },
                   ),
                 ],
               ),

@@ -26,10 +26,11 @@ class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
   late double targetCalories;
   late String goalText;
-  int _selectedCalendarDay = 11;
+  int _selectedCalendarDay = DateTime.now().day;
   int _waterIntakeCups = 0;
   bool _isLoading = true;
 
+  List<dynamic> _allMeals = [];
   List<dynamic> _meals = [];
   double _consumedCalories = 0.0;
   double _consumedCarbs = 0.0;
@@ -42,6 +43,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final userGoal = widget.goal ?? 'Menjaga Berat Badan';
     goalText = userGoal;
     _setTargetCalories(userGoal);
+    _loadWaterIntake();
     _fetchMeals();
   }
 
@@ -54,6 +56,71 @@ class _DashboardPageState extends State<DashboardPage> {
       targetCalories = 2300;
     } else {
       targetCalories = 2000;
+    }
+  }
+
+  bool _isMealOnSelectedDay(Map<String, dynamic> meal, int selectedDay) {
+    final timestamp = meal['timestamp'] as String? ?? '';
+    
+    // Format 1: "YYYY-MM-DD HH:mm"
+    final datePrefix = "2026-06-${selectedDay.toString().padLeft(2, '0')}";
+    if (timestamp.startsWith(datePrefix)) {
+      return true;
+    }
+    
+    // Format 2: "Hari Ini, HH:mm"
+    if (timestamp.contains("Hari Ini") && selectedDay == DateTime.now().day) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  void _filterMealsForSelectedDay() {
+    final filtered = _allMeals.where((m) {
+      final mealMap = m as Map<String, dynamic>;
+      return _isMealOnSelectedDay(mealMap, _selectedCalendarDay);
+    }).toList();
+
+    double cal = 0.0;
+    double carb = 0.0;
+    double prot = 0.0;
+    double fat = 0.0;
+
+    for (var m in filtered) {
+      cal += (m['calories'] as num?)?.toDouble() ?? 0.0;
+      carb += (m['carbs'] as num?)?.toDouble() ?? 0.0;
+      prot += (m['protein'] as num?)?.toDouble() ?? 0.0;
+      fat += (m['fat'] as num?)?.toDouble() ?? 0.0;
+    }
+
+    setState(() {
+      _meals = filtered;
+      _consumedCalories = cal;
+      _consumedCarbs = carb;
+      _consumedProtein = prot;
+      _consumedFat = fat;
+    });
+  }
+
+  Future<void> _loadWaterIntake() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'water_intake_2026_06_$_selectedCalendarDay';
+    if (mounted) {
+      setState(() {
+        _waterIntakeCups = prefs.getInt(key) ?? 0;
+      });
+    }
+  }
+
+  Future<void> _saveWaterIntake(int cups) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'water_intake_2026_06_$_selectedCalendarDay';
+    await prefs.setInt(key, cups);
+    if (mounted) {
+      setState(() {
+        _waterIntakeCups = cups;
+      });
     }
   }
 
@@ -75,27 +142,12 @@ class _DashboardPageState extends State<DashboardPage> {
       final apiService = ApiService();
       final meals = await apiService.getMeals(email);
 
-      double cal = 0.0;
-      double carb = 0.0;
-      double prot = 0.0;
-      double fat = 0.0;
-
-      for (var m in meals) {
-        cal += (m['calories'] as num?)?.toDouble() ?? 0.0;
-        carb += (m['carbs'] as num?)?.toDouble() ?? 0.0;
-        prot += (m['protein'] as num?)?.toDouble() ?? 0.0;
-        fat += (m['fat'] as num?)?.toDouble() ?? 0.0;
-      }
-
       if (mounted) {
         setState(() {
-          _meals = meals;
-          _consumedCalories = cal;
-          _consumedCarbs = carb;
-          _consumedProtein = prot;
-          _consumedFat = fat;
+          _allMeals = meals;
           _isLoading = false;
         });
+        _filterMealsForSelectedDay();
       }
     } catch (_) {
       if (mounted) {
@@ -262,15 +314,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 setState(() {
                   _selectedCalendarDay = day;
                 });
+                _loadWaterIntake();
+                _filterMealsForSelectedDay();
               },
             ),
             const SizedBox(height: 24),
             WaterTrackerCardWidget(
               waterIntakeCups: _waterIntakeCups,
               onCupsChanged: (cups) {
-                setState(() {
-                  _waterIntakeCups = cups;
-                });
+                _saveWaterIntake(cups);
               },
             ),
             const SizedBox(height: 24),

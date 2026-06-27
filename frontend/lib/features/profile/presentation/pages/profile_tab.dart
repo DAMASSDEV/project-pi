@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/pages/sign_in_page.dart';
+import '../../../personalization/presentation/pages/personalization_page.dart';
 
 import '../widgets/profile_header_widget.dart';
 import '../widgets/health_summary_section_widget.dart';
@@ -47,6 +48,10 @@ class _ProfileTabState extends State<ProfileTab> {
         _personalizationData = res['data'];
         _name = _personalizationData!['name'] ?? _name;
       });
+    } else {
+      setState(() {
+        _personalizationData = null;
+      });
     }
 
     setState(() => _isLoading = false);
@@ -84,10 +89,59 @@ class _ProfileTabState extends State<ProfileTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            if (_personalizationData == null)
+              Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFECEB),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.red.shade100),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Colors.redAccent, size: 20),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Data personal belum tersedia. Silakan lengkapi personalisasi.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.neutralColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => PersonalizationPage(email: _email),
+                          ),
+                        ).then((_) => _fetchProfileData());
+                      },
+                      child: const Text(
+                        'Lengkapi',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 16),
             ProfileHeaderWidget(
               name: _name,
               email: _email,
+              onEditTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PersonalizationPage(email: _email),
+                  ),
+                ).then((_) => _fetchProfileData());
+              },
             ),
             const SizedBox(height: 32),
             HealthSummarySectionWidget(
