@@ -52,11 +52,44 @@ class _HistoryTabState extends State<HistoryTab> {
     }
   }
 
+  bool _isMealInSelectedRange(Map<String, dynamic> meal, String range) {
+    final timestamp = meal['timestamp'] as String? ?? '';
+    
+    DateTime mealDate;
+    final regExp = RegExp(r'^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$');
+    if (regExp.hasMatch(timestamp)) {
+      final match = regExp.firstMatch(timestamp)!;
+      final y = int.parse(match.group(1)!);
+      final m = int.parse(match.group(2)!);
+      final d = int.parse(match.group(3)!);
+      mealDate = DateTime(y, m, d);
+    } else if (timestamp.contains("Hari Ini")) {
+      mealDate = DateTime.now();
+    } else {
+      return true;
+    }
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final diffDays = today.difference(DateTime(mealDate.year, mealDate.month, mealDate.day)).inDays;
+    
+    if (range == 'Hari Ini') {
+      return diffDays == 0;
+    } else if (range == 'Minggu Ini') {
+      return diffDays >= 0 && diffDays < 7;
+    } else if (range == 'Bulan Ini') {
+      return mealDate.year == now.year && mealDate.month == now.month;
+    }
+    return true;
+  }
+
   void _applyFilters() {
     List<dynamic> filtered = List.from(_allMeals);
     
-    // Simulate simple filtering for the demo based on the dropdown
-    // In a real app we would parse the ISO timestamps
+    filtered = filtered.where((m) {
+      final mealMap = m as Map<String, dynamic>;
+      return _isMealInSelectedRange(mealMap, _selectedRange);
+    }).toList();
     
     if (_selectedSort == 'Terbaru') {
       filtered.sort((a, b) => (b['id'] ?? 0).compareTo(a['id'] ?? 0));
