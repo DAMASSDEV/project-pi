@@ -41,3 +41,5 @@ class ScanResponse(BaseModel):
     components: str
     description: str
     image_path: str
+    is_bogor_food: bool = True
+    alert_message: str = ""
