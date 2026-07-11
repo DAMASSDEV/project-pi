@@ -15,7 +15,7 @@ run_all() {
   cd backend && ./venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
   BACKEND_PID=$!
   trap 'kill $BACKEND_PID; exit' INT TERM EXIT
-  cd ../frontend && flutter run
+  cd frontend && flutter run
 }
 
 if [ "$1" = "backend" ]; then

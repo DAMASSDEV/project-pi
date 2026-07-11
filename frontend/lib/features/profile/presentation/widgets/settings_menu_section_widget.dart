@@ -256,7 +256,7 @@ class SettingsMenuSectionWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'ACCOUNT SETTINGS',
+              'PENGATURAN AKUN',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -275,7 +275,7 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                 children: [
                   _buildMenuTile(
                     icon: Icons.person_outline_rounded,
-                    title: 'Personal Information',
+                    title: 'Informasi Pribadi',
                     iconColor: AppTheme.primaryColor,
                     iconBgColor: AppTheme.secondaryColor,
                     onTap: () => _showPersonalInfo(context),
@@ -283,7 +283,7 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                   const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
                   _buildMenuTile(
                     icon: Icons.assignment_turned_in_outlined,
-                    title: 'Health History',
+                    title: 'Riwayat Kesehatan',
                     iconColor: AppTheme.primaryColor,
                     iconBgColor: AppTheme.secondaryColor,
                     onTap: () => _showHealthHistory(context),
@@ -291,23 +291,10 @@ class SettingsMenuSectionWidget extends StatelessWidget {
                   const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
                   _buildMenuTile(
                     icon: Icons.restaurant_rounded,
-                    title: 'Dietary Preferences',
+                    title: 'Preferensi Pola Makan',
                     iconColor: AppTheme.primaryColor,
                     iconBgColor: AppTheme.secondaryColor,
                     onTap: () => _showDietaryPreferences(context),
-                  ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
-                  _buildMenuTile(
-                    icon: Icons.devices_rounded,
-                    title: 'Connected Devices',
-                    iconColor: AppTheme.primaryColor,
-                    iconBgColor: AppTheme.secondaryColor,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ConnectedDevicesPage()),
-                      );
-                    },
                   ),
                 ],
               ),
@@ -319,7 +306,7 @@ class SettingsMenuSectionWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'APP SETTINGS',
+              'PENGATURAN APLIKASI',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -337,47 +324,8 @@ class SettingsMenuSectionWidget extends StatelessWidget {
               child: Column(
                 children: [
                   _buildMenuTile(
-                    icon: Icons.notifications_none_rounded,
-                    title: 'Notifications',
-                    iconColor: Colors.grey.shade700,
-                    iconBgColor: const Color(0xFFF1F3F5),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const NotificationsPage()),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
-                  _buildMenuTile(
-                    icon: Icons.lock_outline_rounded,
-                    title: 'Privacy & Security',
-                    iconColor: Colors.grey.shade700,
-                    iconBgColor: const Color(0xFFF1F3F5),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PrivacySecurityPage()),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
-                  _buildMenuTile(
-                    icon: Icons.help_outline_rounded,
-                    title: 'Help Center',
-                    iconColor: Colors.grey.shade700,
-                    iconBgColor: const Color(0xFFF1F3F5),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HelpCenterPage()),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFF8F9FA)),
-                  _buildMenuTile(
                     icon: Icons.info_outline_rounded,
-                    title: 'About Nutrify',
+                    title: 'Tentang Nutrify',
                     iconColor: Colors.grey.shade700,
                     iconBgColor: const Color(0xFFF1F3F5),
                     onTap: () {

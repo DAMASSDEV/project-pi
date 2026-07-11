@@ -4,7 +4,8 @@ from app.core.database import get_db
 from app.schemas.auth import (
     SignInRequest, SignInResponse,
     SignUpRequest, SignUpResponse,
-    ForgotPasswordRequest, ForgotPasswordResponse
+    ForgotPasswordRequest, ForgotPasswordResponse,
+    ResetPasswordRequest, ResetPasswordResponse
 )
 from app.models.user import User
 from app.models.personalization import Personalization
@@ -63,4 +64,17 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(
     return ForgotPasswordResponse(
         success=True,
         message="Tautan pemulihan kata sandi telah dikirim ke email Anda."
+    )
+
+@router.post("/api/auth/reset-password", response_model=ResetPasswordResponse)
+async def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
+    
+    user.password = payload.password
+    db.commit()
+    return ResetPasswordResponse(
+        success=True,
+        message="Kata sandi berhasil diperbarui!"
     )

@@ -218,6 +218,25 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> updateMeal(int mealId, Map<String, dynamic> mealData) async {
+    final url = Uri.parse('$baseUrl/api/meals/$mealId');
+    try {
+      final response = await _client.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(mealData),
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        return {'success': true, 'meal': decoded};
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> forgotPassword(String email) async {
     final url = Uri.parse('$baseUrl/api/auth/forgot-password');
     try {
@@ -278,6 +297,34 @@ class ApiService {
         };
       }
       return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPassword(String email, String password) async {
+    final url = Uri.parse('$baseUrl/api/auth/reset-password');
+    try {
+      final response = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final errorData = jsonDecode(response.body);
+          final message = errorData['detail'] ?? 'Gagal memperbarui kata sandi.';
+          return {'success': false, 'message': message};
+        } catch (_) {
+          return {'success': false, 'message': 'Gagal dengan status ${response.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Gagal terhubung ke server: $e'
+      };
     }
   }
 }

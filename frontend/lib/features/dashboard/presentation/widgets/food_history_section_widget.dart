@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/services/date_helper.dart';
+import '../pages/meal_detail_page.dart';
 
 class FoodHistorySectionWidget extends StatelessWidget {
   final VoidCallback onViewAll;
   final List<dynamic> meals;
+  final VoidCallback? onMealDeleted;
 
   const FoodHistorySectionWidget({
     super.key,
     required this.onViewAll,
     required this.meals,
+    this.onMealDeleted,
   });
 
   @override
@@ -97,14 +100,27 @@ class FoodHistorySectionWidget extends StatelessWidget {
 
                 int componentCount = components.split(',').length;
 
-                return _buildFoodHistoryCard(
-                  imagePath,
-                  foodName,
-                  timestamp,
-                  '$calories kkal',
-                  isManual ? 'Manual Entry' : '$componentCount Komponen',
-                  typeBadge,
-                  badgeColor,
+                 return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MealDetailPage(
+                          meal: meal,
+                          onDeleteSuccess: onMealDeleted,
+                        ),
+                      ),
+                    );
+                  },
+                  child: _buildFoodHistoryCard(
+                    imagePath,
+                    foodName,
+                    timestamp,
+                    '$calories kkal',
+                    isManual ? 'Input Manual' : '$componentCount Komponen',
+                    typeBadge,
+                    badgeColor,
+                  ),
                 );
               },
             ),

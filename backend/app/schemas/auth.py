@@ -27,3 +27,11 @@ class ForgotPasswordRequest(BaseModel):
 class ForgotPasswordResponse(BaseModel):
     success: bool
     message: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    password: str
+
+class ResetPasswordResponse(BaseModel):
+    success: bool
+    message: str

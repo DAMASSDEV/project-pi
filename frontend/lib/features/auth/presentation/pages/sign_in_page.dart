@@ -177,40 +177,7 @@ class _SignInPageState extends State<SignInPage> {
                   isLoading: _isLoading,
                   onPressed: _handleSignIn,
                 ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        color: Colors.grey.shade300,
-                        thickness: 1,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Atau lanjutkan dengan',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade500,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        color: Colors.grey.shade300,
-                        thickness: 1,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                SocialButton(
-                  text: 'Masuk dengan Google',
-                  onPressed: () => _showFeatureUnavailable('Masuk dengan Google'),
-                ),
-                const SizedBox(height: 32),
+                 const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

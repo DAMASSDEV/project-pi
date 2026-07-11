@@ -6,6 +6,7 @@ import '../widgets/history_summary_card.dart';
 import '../widgets/food_log_card.dart';
 import '../widgets/history_insight_card.dart';
 import '../../../../core/services/date_helper.dart';
+import '../../../dashboard/presentation/pages/meal_detail_page.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -16,7 +17,7 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   final ApiService _apiService = ApiService();
-  String _selectedRange = 'Hari Ini';
+  String _selectedRange = 'Minggu Ini';
   String _selectedSort = 'Terbaru';
   bool _isLoading = true;
   List<dynamic> _allMeals = [];
@@ -208,10 +209,6 @@ class _HistoryTabState extends State<HistoryTab> {
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                     const PopupMenuItem<String>(
-                      value: 'Hari Ini',
-                      child: Text('Hari Ini'),
-                    ),
-                    const PopupMenuItem<String>(
                       value: 'Minggu Ini',
                       child: Text('Minggu Ini'),
                     ),
@@ -402,39 +399,52 @@ class _HistoryTabState extends State<HistoryTab> {
 
                             int componentCount = components.split(',').length;
 
-                            return Stack(
-                              children: [
-                                FoodLogCard(
-                                  imagePath: imagePath,
-                                  name: foodName,
-                                  time: timestamp,
-                                  badgeText: isManual ? 'Manual Entry' : '$componentCount komponen terdeteksi',
-                                  isManual: isManual,
-                                  calories: calories,
-                                  protein: protein,
-                                  carbs: carbs,
-                                  fat: fat,
-                                ),
-                                Positioned(
-                                  top: 12,
-                                  right: 12,
-                                  child: GestureDetector(
-                                    onTap: () => _confirmDelete(mealId),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: Colors.redAccent.withOpacity(0.08),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.delete_outline_rounded,
-                                        color: Colors.redAccent,
-                                        size: 16,
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MealDetailPage(
+                                      meal: meal,
+                                      onDeleteSuccess: _fetchMeals,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Stack(
+                                children: [
+                                  FoodLogCard(
+                                    imagePath: imagePath,
+                                    name: foodName,
+                                    time: timestamp,
+                                    badgeText: isManual ? 'Input Manual' : '$componentCount komponen terdeteksi',
+                                    isManual: isManual,
+                                    calories: calories,
+                                    protein: protein,
+                                    carbs: carbs,
+                                    fat: fat,
+                                  ),
+                                  Positioned(
+                                    top: 12,
+                                    right: 12,
+                                    child: GestureDetector(
+                                      onTap: () => _confirmDelete(mealId),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.redAccent.withOpacity(0.08),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          color: Colors.redAccent,
+                                          size: 16,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             );
                           },
                         ),

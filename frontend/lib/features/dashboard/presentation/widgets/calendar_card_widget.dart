@@ -45,52 +45,67 @@ class CalendarCardWidget extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade200),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Text(
-                    'Hari Ini',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.neutralColor,
+                GestureDetector(
+                  onTap: () => onDaySelected(DateTime.now().day),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade200),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Text(
+                      'Hari Ini',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neutralColor,
+                      ),
                     ),
                   ),
                 ),
                 const Spacer(),
-                const Text(
-                  'Juni 2026',
-                  style: TextStyle(
+                Text(
+                  _getCurrentMonthYearString(),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: AppTheme.neutralColor,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                GestureDetector(
+                  onTap: selectedDay > 1 ? () => onDaySelected(selectedDay - 1) : null,
+                  child: Opacity(
+                    opacity: selectedDay > 1 ? 1.0 : 0.3,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                      ),
+                      child: const Icon(Icons.chevron_left_rounded, color: AppTheme.primaryColor, size: 20),
+                    ),
                   ),
-                  child: const Icon(Icons.chevron_left_rounded, color: AppTheme.primaryColor, size: 20),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                GestureDetector(
+                  onTap: selectedDay < DateTime.now().day ? () => onDaySelected(selectedDay + 1) : null,
+                  child: Opacity(
+                    opacity: selectedDay < DateTime.now().day ? 1.0 : 0.3,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                      ),
+                      child: const Icon(Icons.chevron_right_rounded, color: AppTheme.primaryColor, size: 20),
+                    ),
                   ),
-                  child: const Icon(Icons.chevron_right_rounded, color: AppTheme.primaryColor, size: 20),
                 ),
               ],
             ),
@@ -120,10 +135,22 @@ class CalendarCardWidget extends StatelessWidget {
     );
   }
 
+  String _getCurrentMonthYearString() {
+    final now = DateTime.now();
+    final List<String> months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return '${months[now.month - 1]} ${now.year}';
+  }
+
   Widget _buildCalendarGrid() {
+    final now = DateTime.now();
+    final totalDays = DateTime(now.year, now.month + 1, 0).day;
+
     List<Widget> rows = [];
     List<int> rowData = [];
-    for (int day = 1; day <= 30; day++) {
+    for (int day = 1; day <= totalDays; day++) {
       rowData.add(day);
       if (rowData.length == 7) {
         rows.add(_buildCalendarRow(rowData, false));
@@ -149,14 +176,20 @@ class CalendarCardWidget extends StatelessWidget {
   }
 
   Widget _buildCalendarRow(List<int> days, bool isLastRow) {
+    final now = DateTime.now();
+    final today = now.day;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: days.map((day) {
         bool isFaded = day < 0;
         int displayDay = day.abs();
-        bool isSelected = !isFaded && displayDay == selectedDay;
+        
+        bool isFutureDay = !isFaded && displayDay > today;
+        bool isSelected = !isFaded && !isFutureDay && displayDay == selectedDay;
+
         return GestureDetector(
-          onTap: isFaded ? null : () => onDaySelected(displayDay),
+          onTap: (isFaded || isFutureDay) ? null : () => onDaySelected(displayDay),
           child: Container(
             width: 32,
             height: 32,
@@ -172,7 +205,7 @@ class CalendarCardWidget extends StatelessWidget {
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 color: isSelected
                     ? Colors.white
-                    : (isFaded ? Colors.grey.shade300 : AppTheme.neutralColor),
+                    : ((isFaded || isFutureDay) ? Colors.grey.shade300 : AppTheme.neutralColor),
               ),
             ),
           ),
