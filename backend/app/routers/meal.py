@@ -194,7 +194,7 @@ if not os.path.exists(MODEL_PATH):
 
 yolo_model = None
 BOGOR_FOOD_CLASSES = ["Asinan Bogor", "Cungkring", "Doclang", "Laksa", "Toge Goreng"]
-CONFIDENCE_THRESHOLD = 0.25
+CONFIDENCE_THRESHOLD = 0.15
 
 try:
     if os.path.exists(MODEL_PATH):
@@ -218,20 +218,36 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
     detected_name = None
     detected_confidence = 0.0
 
+    print(f"DEBUG: Memulai pemindaian gambar. Status yolo_model: {yolo_model is not None}")
     if yolo_model is not None:
         try:
             results = yolo_model(temp_file_path, verbose=False)
             if results and len(results) > 0:
                 boxes = results[0].boxes
                 if boxes is not None and len(boxes) > 0:
+                    print(f"DEBUG: Menemukan {len(boxes)} boxes.")
+                    for idx, box in enumerate(boxes):
+                        c = float(box.conf[0])
+                        cid = int(box.cls[0])
+                        nm = yolo_model.names[cid]
+                        print(f"DEBUG: Box #{idx} -> Class: {nm} ({cid}), Conf: {c:.4f}")
+                        
                     best_box = max(boxes, key=lambda x: float(x.conf[0]))
                     conf = float(best_box.conf[0])
-                    if conf >= CONFIDENCE_THRESHOLD:
-                        cls_id = int(best_box.cls[0])
-                        detected_name = yolo_model.names[cls_id]
-                        detected_confidence = conf
+                    cls_id = int(best_box.cls[0])
+                    detected_name = yolo_model.names[cls_id]
+                    detected_confidence = conf
+                    print(f"DEBUG: Box terbaik -> {detected_name} dengan Conf: {conf:.4f}")
+                    
+                    if conf < CONFIDENCE_THRESHOLD:
+                        print(f"DEBUG: Conf {conf:.4f} di bawah threshold {CONFIDENCE_THRESHOLD}. Diabaikan.")
+                        detected_name = None
+                else:
+                    print("DEBUG: Tidak ada boxes terdeteksi.")
         except Exception as e:
-            print(f"Error saat prediksi YOLO: {e}")
+            print(f"DEBUG: Error saat prediksi YOLO: {e}")
+    else:
+        print("DEBUG: yolo_model bernilai None! Model gagal dimuat saat startup.")
 
     try:
         os.remove(temp_file_path)
