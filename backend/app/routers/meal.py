@@ -205,6 +205,8 @@ try:
     log_messages.append(f"Exists: {os.path.exists(MODEL_PATH)}")
     
     if os.path.exists(MODEL_PATH):
+        import torch
+        torch.backends.mkldnn.enabled = False
         from ultralytics import YOLO
         yolo_model = YOLO(MODEL_PATH)
         log_messages.append(f"Model YOLO berhasil dimuat. Classes: {yolo_model.names}")
