@@ -3,6 +3,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
+ENV TORCH_ONEDNN_OPTS=0
 
 # Install system dependencies for OpenCV/YOLO
 RUN apt-get update && apt-get install -y \
