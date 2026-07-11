@@ -186,7 +186,9 @@ async def update_meal(meal_id: int, payload: dict, db: Session = Depends(get_db)
 import os
 import shutil
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../../ai-model/bogor_yolo_best.pt")
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "../bogor_yolo_best.pt")
+if not os.path.exists(MODEL_PATH):
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../../ai-model/bogor_yolo_best.pt")
 if not os.path.exists(MODEL_PATH):
     MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../ai-model/bogor_yolo_best.pt")
 
