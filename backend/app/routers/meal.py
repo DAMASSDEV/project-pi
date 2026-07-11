@@ -192,19 +192,38 @@ if not os.path.exists(MODEL_PATH):
 if not os.path.exists(MODEL_PATH):
     MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../ai-model/bogor_yolo_best.pt")
 
+import sys
+import traceback
+
 yolo_model = None
 BOGOR_FOOD_CLASSES = ["Asinan Bogor", "Cungkring", "Doclang", "Laksa", "Toge Goreng"]
 CONFIDENCE_THRESHOLD = 0.15
 
 try:
+    log_messages = []
+    log_messages.append(f"MODEL_PATH: {MODEL_PATH}")
+    log_messages.append(f"Exists: {os.path.exists(MODEL_PATH)}")
+    
     if os.path.exists(MODEL_PATH):
         from ultralytics import YOLO
         yolo_model = YOLO(MODEL_PATH)
-        print(f"Model YOLO berhasil dimuat dari: {MODEL_PATH}")
+        log_messages.append(f"Model YOLO berhasil dimuat. Classes: {yolo_model.names}")
     else:
-        print(f"Model YOLO tidak ditemukan di: {MODEL_PATH}")
+        log_messages.append("Model YOLO tidak ditemukan di path manapun.")
+        
+    log_content = "\n".join(log_messages)
+    print(log_content, flush=True)
+    with open("yolo_startup.log", "w") as f:
+        f.write(log_content)
 except Exception as e:
-    print(f"Gagal memuat model YOLO: {e}")
+    err_msg = f"Gagal memuat model YOLO: {e}\n{traceback.format_exc()}"
+    sys.stderr.write(err_msg + "\n")
+    sys.stderr.flush()
+    try:
+        with open("yolo_startup.log", "w") as f:
+            f.write(err_msg)
+    except Exception:
+        pass
 
 @router.post("/api/meals/scan-image")
 async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
