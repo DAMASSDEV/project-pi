@@ -171,6 +171,25 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> scanFoodImage(String filePath) async {
+    final url = Uri.parse('$baseUrl/api/meals/scan-image');
+    try {
+      final request = http.MultipartRequest('POST', url);
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
   Future<Map<String, dynamic>> saveMeal(Map<String, dynamic> mealData) async {
     final url = Uri.parse('$baseUrl/api/meals');
     try {

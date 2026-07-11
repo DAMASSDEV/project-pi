@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ScannerTab extends StatefulWidget {
   final VoidCallback? onScanSaved;
@@ -424,7 +425,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                           return;
                         }
                         Navigator.pop(context);
-                        _startAnalysisFlow(foodName);
+                        _startAnalysisFlow(foodName: foodName);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
@@ -451,8 +452,8 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
 
   Future<void> _captureAndAnalyze() async {
     if (_isScanning) return;
-    String foodName = 'Soto Kuning Bogor';
     if (_isDemoMode) {
+      String foodName = 'Soto Kuning Bogor';
       if (_demoImageIndex == 0) {
         foodName = 'Doclang';
       } else if (_demoImageIndex == 1) {
@@ -460,23 +461,60 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       } else if (_demoImageIndex == 2) {
         foodName = 'Soto Kuning Bogor';
       }
+      _startAnalysisFlow(foodName: foodName);
     } else {
       if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+      try {
+        final file = await _cameraController!.takePicture();
+        _startAnalysisFlow(filePath: file.path);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal mengambil gambar dari kamera'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
-    _startAnalysisFlow(foodName);
   }
 
-  Future<void> _startAnalysisFlow(String foodName) async {
+  Future<void> _pickFromGallery() async {
+    if (_isScanning) return;
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        _startAnalysisFlow(filePath: pickedFile.path);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal memilih gambar dari galeri'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  Future<void> _startAnalysisFlow({String? foodName, String? filePath}) async {
     setState(() {
       _isScanning = true;
     });
 
     try {
-      if (_isFlashOn) {
+      if (_isFlashOn && _cameraController != null && _cameraController!.value.isInitialized) {
         await _cameraController!.setFlashMode(FlashMode.off);
       }
 
-      final result = await _apiService.scanFood(foodName);
+      final Map<String, dynamic> result;
+      if (filePath != null) {
+        result = await _apiService.scanFoodImage(filePath);
+      } else if (foodName != null) {
+        result = await _apiService.scanFood(foodName);
+      } else {
+        result = {'success': false, 'message': 'Parameter tidak valid'};
+      }
 
       await Future.delayed(const Duration(milliseconds: 1500));
 
@@ -487,7 +525,12 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       });
 
       if (result['success'] == true) {
-        _showResultSheet(result);
+        final isBogorFood = result['is_bogor_food'] ?? true;
+        if (isBogorFood == false) {
+          _showNotBogorAlert(result['alert_message'] ?? 'Makanan tidak terdeteksi sebagai makanan khas Bogor.');
+        } else {
+          _showResultSheet(result);
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -508,6 +551,190 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
         ),
       );
     }
+  }
+
+  void _showNotBogorAlert(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: Colors.orange.shade700, size: 28),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Bukan Makanan Khas Bogor',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                message,
+                style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryColor, size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Anda dapat memasukkan nama bahan makanan secara manual untuk melihat kandungan gizinya.',
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Tutup',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showManualIngredientSearch();
+              },
+              icon: const Icon(Icons.search_rounded, size: 18),
+              label: const Text('Cari Bahan Makanan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showManualIngredientSearch() {
+    final textController = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Cari Bahan Makanan',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Masukkan nama bahan atau makanan untuk melihat kandungan gizinya dari database kami (2000+ bahan makanan).',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: textController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  hintText: 'Contoh: nasi putih, ayam goreng, tempe...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                  prefixIcon: Icon(Icons.search_rounded, color: AppTheme.primaryColor),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final name = textController.text.trim();
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Silakan masukkan nama bahan makanan.'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pop(ctx);
+                    _startAnalysisFlow(foodName: name);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    'Analisis Gizi',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showResultSheet(Map<String, dynamic> data) {
@@ -959,9 +1186,9 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Container(
-      color: Colors.white,
-      child: Stack(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
         children: [
           Positioned(
             left: 0,
@@ -974,52 +1201,52 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                 fit: StackFit.expand,
                 children: [
                   _buildCameraPreview(),
-                    if (_showGrid)
-                      CustomPaint(
-                        painter: CameraGridPainter(),
-                      ),
-                    if (_isScanning)
-                      Container(
-                        color: Colors.black.withValues(alpha: 0.7),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 48,
-                                height: 48,
-                                child: CircularProgressIndicator(
-                                  color: AppTheme.primaryColor,
-                                  strokeWidth: 3,
-                                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
-                                ),
+                  if (_showGrid)
+                    CustomPaint(
+                      painter: CameraGridPainter(),
+                    ),
+                  if (_isScanning)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: CircularProgressIndicator(
+                                color: AppTheme.primaryColor,
+                                strokeWidth: 3,
+                                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
                               ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                'Menganalisis...',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.3,
-                                ),
+                            ),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'Menganalisis...',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'AI sedang mengidentifikasi makanan',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                  fontSize: 12,
-                                ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'AI sedang mengidentifikasi makanan',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.5),
+                                fontSize: 12,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
+          ),
           Positioned(
             top: topPadding + 12,
             left: 16,
@@ -1027,10 +1254,19 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildTopControl(
-                  icon: _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                  isActive: _isFlashOn,
-                  onTap: _toggleFlash,
+                Row(
+                  children: [
+                    _buildTopControl(
+                      icon: Icons.arrow_back_rounded,
+                      onTap: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildTopControl(
+                      icon: _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                      isActive: _isFlashOn,
+                      onTap: _toggleFlash,
+                    ),
+                  ],
                 ),
                 Row(
                   children: [
@@ -1056,7 +1292,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
           Positioned(
             left: 0,
             right: 0,
-            bottom: bottomPadding + 110,
+            bottom: bottomPadding + 136,
             child: Center(
               child: Container(
                 padding: const EdgeInsets.all(3),
@@ -1076,12 +1312,32 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
           Positioned(
             left: 0,
             right: 0,
-            bottom: bottomPadding + 16,
+            bottom: bottomPadding + 40,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(width: 60),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: _isScanning ? null : _pickFromGallery,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.photo_library_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
                 const Spacer(),
                 GestureDetector(
                   onTap: _isScanning ? null : _captureAndAnalyze,

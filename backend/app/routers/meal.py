@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
@@ -182,3 +182,89 @@ async def update_meal(meal_id: int, payload: dict, db: Session = Depends(get_db)
         "image_path": db_meal.image_path,
         "is_manual": db_meal.is_manual
     }}
+
+import os
+import shutil
+
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../../ai-model/bogor_yolo_best.pt")
+if not os.path.exists(MODEL_PATH):
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../ai-model/bogor_yolo_best.pt")
+
+yolo_model = None
+BOGOR_FOOD_CLASSES = ["Asinan Bogor", "Cungkring", "Doclang", "Laksa", "Toge Goreng"]
+CONFIDENCE_THRESHOLD = 0.25
+
+try:
+    if os.path.exists(MODEL_PATH):
+        from ultralytics import YOLO
+        yolo_model = YOLO(MODEL_PATH)
+        print(f"Model YOLO berhasil dimuat dari: {MODEL_PATH}")
+    else:
+        print(f"Model YOLO tidak ditemukan di: {MODEL_PATH}")
+except Exception as e:
+    print(f"Gagal memuat model YOLO: {e}")
+
+@router.post("/api/meals/scan-image")
+async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    temp_dir = "/tmp" if os.name != "nt" else "C:\\Temp"
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_file_path = os.path.join(temp_dir, file.filename or "scan_upload.jpg")
+
+    with open(temp_file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    detected_name = None
+    detected_confidence = 0.0
+
+    if yolo_model is not None:
+        try:
+            results = yolo_model(temp_file_path, verbose=False)
+            if results and len(results) > 0:
+                boxes = results[0].boxes
+                if boxes is not None and len(boxes) > 0:
+                    best_box = max(boxes, key=lambda x: float(x.conf[0]))
+                    conf = float(best_box.conf[0])
+                    if conf >= CONFIDENCE_THRESHOLD:
+                        cls_id = int(best_box.cls[0])
+                        detected_name = yolo_model.names[cls_id]
+                        detected_confidence = conf
+        except Exception as e:
+            print(f"Error saat prediksi YOLO: {e}")
+
+    try:
+        os.remove(temp_file_path)
+    except Exception:
+        pass
+
+    if detected_name is not None:
+        scan_result = await scan_meal({"food_name": detected_name}, db)
+        return ScanResponse(
+            success=True,
+            food_name=scan_result.food_name,
+            calories=scan_result.calories,
+            protein=scan_result.protein,
+            carbs=scan_result.carbs,
+            fat=scan_result.fat,
+            health_score=scan_result.health_score,
+            components=scan_result.components,
+            description=scan_result.description,
+            image_path=scan_result.image_path,
+            is_bogor_food=True,
+            alert_message=""
+        )
+    else:
+        return ScanResponse(
+            success=True,
+            food_name="Tidak Terdeteksi",
+            calories=0.0,
+            protein=0.0,
+            carbs=0.0,
+            fat=0.0,
+            health_score=0,
+            components="",
+            description="",
+            image_path="assets/image3.png",
+            is_bogor_food=False,
+            alert_message="Makanan ini bukan makanan khas Bogor yang dapat dikenali oleh AI kami. Silakan masukkan nama bahan makanan secara manual untuk melihat kandungan gizinya dari database kami."
+        )
+

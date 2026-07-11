@@ -233,14 +233,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   _buildHomeTab(),
                   const RecommendationsTab(),
-                  ScannerTab(
-                    onScanSaved: () {
-                      _fetchMeals();
-                      setState(() {
-                        _currentIndex = 0;
-                      });
-                    },
-                  ),
                   const HistoryTab(),
                   const ProfileTab(),
                 ],
@@ -355,7 +347,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onMealDeleted: _fetchMeals,
               onViewAll: () {
                 setState(() {
-                  _currentIndex = 3;
+                  _currentIndex = 2;
                 });
               },
             ),
@@ -374,7 +366,7 @@ class _DashboardPageState extends State<DashboardPage> {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomPadding > 0 ? 6.0 : 0.0),
+      padding: EdgeInsets.only(bottom: bottomPadding > 0 ? bottomPadding : 12.0),
       child: Stack(
         alignment: Alignment.topCenter,
         clipBehavior: Clip.none,
@@ -391,8 +383,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     _buildNavItem(0, Icons.home_filled, 'Beranda'),
                     _buildNavItem(1, Icons.menu_book_rounded, 'Rekomendasi'),
                     const SizedBox(width: 60),
-                    _buildNavItem(3, Icons.history_rounded, 'Riwayat'),
-                    _buildNavItem(4, Icons.person_outline_rounded, 'Akun'),
+                    _buildNavItem(2, Icons.history_rounded, 'Riwayat'),
+                    _buildNavItem(3, Icons.person_outline_rounded, 'Akun'),
                   ],
                 ),
               ),
@@ -473,9 +465,16 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(2),
         child: GestureDetector(
           onTap: () {
-            setState(() {
-              _currentIndex = 2;
-            });
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ScannerTab(
+                  onScanSaved: () {
+                    _fetchMeals();
+                  },
+                ),
+              ),
+            );
           },
           child: Container(
             decoration: const BoxDecoration(
