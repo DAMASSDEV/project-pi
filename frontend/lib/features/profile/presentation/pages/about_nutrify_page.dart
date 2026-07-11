@@ -62,7 +62,7 @@ class AboutNutrifyPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'About Nutrify',
+          'Tentang Nutrify',
           style: TextStyle(
             color: AppTheme.neutralColor,
             fontWeight: FontWeight.bold,
@@ -127,26 +127,9 @@ class AboutNutrifyPage extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 12),
-            _buildSectionHeader('INFORMASI APLIKASI'),
-            _buildLinkTile(
-              title: 'Ketentuan Layanan (Terms of Service)',
-              icon: Icons.assignment_outlined,
-              onTap: () => showTopToast(context, 'Membuka Ketentuan Layanan...'),
-            ),
-            _buildLinkTile(
-              title: 'Kebijakan Privasi (Privacy Policy)',
-              icon: Icons.privacy_tip_outlined,
-              onTap: () => showTopToast(context, 'Membuka Kebijakan Privasi...'),
-            ),
-            _buildLinkTile(
-              title: 'Lisensi Perangkat Lunak',
-              icon: Icons.info_outline_rounded,
-              onTap: () => showTopToast(context, 'Membuka Lisensi Open Source...'),
-            ),
             const SizedBox(height: 32),
             Text(
-              '© 2026 Nutrify. Seluruh Hak Cipta Dilindungi.',
+              '© 2026 Damassdev. Seluruh Hak Cipta Dilindungi.',
               style: TextStyle(
                 fontSize: 11,
                 color: Colors.grey.shade400,

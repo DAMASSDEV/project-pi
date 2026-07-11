@@ -103,6 +103,7 @@ class _OnboardingPageState extends State<OnboardingPage>
     final double bottomSheetHeight = screenSize.height * 0.39;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Container(
         width: double.infinity,
         height: double.infinity,

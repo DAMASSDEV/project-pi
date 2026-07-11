@@ -450,8 +450,20 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
   }
 
   Future<void> _captureAndAnalyze() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized || _isScanning) return;
-    _showFoodSelectorSheet();
+    if (_isScanning) return;
+    String foodName = 'Soto Kuning Bogor';
+    if (_isDemoMode) {
+      if (_demoImageIndex == 0) {
+        foodName = 'Doclang';
+      } else if (_demoImageIndex == 1) {
+        foodName = 'Asinan Bogor';
+      } else if (_demoImageIndex == 2) {
+        foodName = 'Soto Kuning Bogor';
+      }
+    } else {
+      if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    }
+    _startAnalysisFlow(foodName);
   }
 
   Future<void> _startAnalysisFlow(String foodName) async {

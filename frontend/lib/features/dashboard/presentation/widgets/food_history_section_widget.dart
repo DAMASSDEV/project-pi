@@ -117,7 +117,7 @@ class FoodHistorySectionWidget extends StatelessWidget {
                     foodName,
                     timestamp,
                     '$calories kkal',
-                    isManual ? 'Manual Entry' : '$componentCount Komponen',
+                    isManual ? 'Input Manual' : '$componentCount Komponen',
                     typeBadge,
                     badgeColor,
                   ),

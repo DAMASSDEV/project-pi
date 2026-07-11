@@ -17,7 +17,7 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   final ApiService _apiService = ApiService();
-  String _selectedRange = 'Hari Ini';
+  String _selectedRange = 'Minggu Ini';
   String _selectedSort = 'Terbaru';
   bool _isLoading = true;
   List<dynamic> _allMeals = [];
@@ -208,10 +208,6 @@ class _HistoryTabState extends State<HistoryTab> {
                     });
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'Hari Ini',
-                      child: Text('Hari Ini'),
-                    ),
                     const PopupMenuItem<String>(
                       value: 'Minggu Ini',
                       child: Text('Minggu Ini'),
@@ -421,7 +417,7 @@ class _HistoryTabState extends State<HistoryTab> {
                                     imagePath: imagePath,
                                     name: foodName,
                                     time: timestamp,
-                                    badgeText: isManual ? 'Manual Entry' : '$componentCount komponen terdeteksi',
+                                    badgeText: isManual ? 'Input Manual' : '$componentCount komponen terdeteksi',
                                     isManual: isManual,
                                     calories: calories,
                                     protein: protein,

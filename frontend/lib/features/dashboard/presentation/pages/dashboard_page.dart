@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
-import '../../../chatbot/presentation/pages/chatbot_tab.dart';
+import '../../../recommendations/presentation/pages/recommendations_tab.dart';
 import '../../../history/presentation/pages/history_tab.dart';
 import '../../../profile/presentation/pages/profile_tab.dart';
 import '../../../scanner/presentation/pages/scanner_tab.dart';
@@ -42,34 +42,104 @@ class _DashboardPageState extends State<DashboardPage> {
     super.initState();
     final userGoal = widget.goal ?? 'Menjaga Berat Badan';
     goalText = userGoal;
-    _setTargetCalories(userGoal);
+    targetCalories = 2000.0;
     _loadWaterIntake();
     _fetchMeals();
+    _fetchPersonalization();
   }
 
-  void _setTargetCalories(String goal) {
-    if (goal == 'Menurunkan Berat Badan') {
-      targetCalories = 1500;
-    } else if (goal == 'Menaikkan Berat Badan') {
-      targetCalories = 2500;
-    } else if (goal == 'Meningkatkan Massa Otot') {
-      targetCalories = 2300;
-    } else {
-      targetCalories = 2000;
+  void _setTargetCalories(Map<String, dynamic> data) {
+    final String goal = data['goal'] ?? 'Menjaga Berat Badan';
+    final double weight = double.tryParse(data['weight']?.toString() ?? '') ?? 70.0;
+    final double height = double.tryParse(data['height']?.toString() ?? '') ?? 170.0;
+    final String gender = (data['gender'] ?? 'Laki-laki').toString();
+    final String activity = (data['activity'] ?? 'Jarang').toString().toLowerCase();
+    
+    int age = 25;
+    if (data['dob'] != null && data['dob'].toString().isNotEmpty) {
+      try {
+        final dob = DateTime.parse(data['dob']);
+        age = DateTime.now().year - dob.year;
+      } catch (_) {}
     }
+
+    double bmr = 0;
+    if (gender == 'Perempuan' || gender.toLowerCase().contains('wanita') || gender.toLowerCase().contains('female')) {
+      bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+    } else {
+      bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+    }
+
+    double multiplier = 1.2;
+    if (activity.contains('sangat aktif') || activity.contains('6-7')) {
+      multiplier = 1.725;
+    } else if (activity.contains('cukup aktif') || activity.contains('3-5') || activity.contains('sedang')) {
+      multiplier = 1.55;
+    } else if (activity.contains('jarang') || activity.contains('1-3')) {
+      multiplier = 1.375;
+    }
+
+    double tdee = bmr * multiplier;
+
+    if (goal == 'Menurunkan Berat Badan') {
+      tdee -= 500;
+    } else if (goal == 'Menaikkan Berat Badan') {
+      tdee += 500;
+    } else if (goal == 'Meningkatkan Massa Otot') {
+      tdee += 300;
+    }
+
+    setState(() {
+      targetCalories = tdee.roundToDouble().clamp(1200, 3500);
+    });
+  }
+
+  Future<void> _fetchPersonalization() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('logged_in_email');
+      if (email != null) {
+        final apiService = ApiService();
+        final res = await apiService.getPersonalization(email);
+        if (res['success'] == true && res['data'] != null) {
+          final data = res['data'];
+          if (mounted) {
+            setState(() {
+              goalText = data['goal'] ?? 'Menjaga Berat Badan';
+              _setTargetCalories(data);
+            });
+          }
+          return;
+        }
+      }
+
+      if (mounted) {
+        final savedGoal = prefs.getString('user_goal') ?? 'Menjaga Berat Badan';
+        setState(() {
+          goalText = savedGoal;
+          _setTargetCalories({
+            'goal': savedGoal,
+            'weight': prefs.getDouble('user_weight') ?? 70.0,
+            'height': prefs.getDouble('user_height') ?? 170.0,
+            'gender': prefs.getString('user_gender') ?? 'Laki-laki',
+            'activity': prefs.getString('user_activity') ?? 'Jarang',
+            'dob': prefs.getString('user_dob') ?? '2001-01-01',
+          });
+        });
+      }
+    } catch (_) {}
   }
 
   bool _isMealOnSelectedDay(Map<String, dynamic> meal, int selectedDay) {
     final timestamp = meal['timestamp'] as String? ?? '';
     
-    // Format 1: "YYYY-MM-DD HH:mm"
-    final datePrefix = "2026-06-${selectedDay.toString().padLeft(2, '0')}";
+    final now = DateTime.now();
+    final datePrefix = "${now.year}-${now.month.toString().padLeft(2, '0')}-${selectedDay.toString().padLeft(2, '0')}";
     if (timestamp.startsWith(datePrefix)) {
       return true;
     }
     
-    // Format 2: "Hari Ini, HH:mm"
-    if (timestamp.contains("Hari Ini") && selectedDay == DateTime.now().day) {
+    if (timestamp.contains("Hari Ini") && selectedDay == now.day) {
       return true;
     }
     
@@ -105,7 +175,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _loadWaterIntake() async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'water_intake_2026_06_$_selectedCalendarDay';
+    final now = DateTime.now();
+    final key = 'water_intake_${now.year}_${now.month.toString().padLeft(2, '0')}_$_selectedCalendarDay';
     if (mounted) {
       setState(() {
         _waterIntakeCups = prefs.getInt(key) ?? 0;
@@ -115,7 +186,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _saveWaterIntake(int cups) async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'water_intake_2026_06_$_selectedCalendarDay';
+    final now = DateTime.now();
+    final key = 'water_intake_${now.year}_${now.month.toString().padLeft(2, '0')}_$_selectedCalendarDay';
     await prefs.setInt(key, cups);
     if (mounted) {
       setState(() {
@@ -127,17 +199,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _fetchMeals() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
-      if (widget.goal == null) {
-        final savedGoal = prefs.getString('user_goal');
-        if (savedGoal != null && mounted) {
-          setState(() {
-            goalText = savedGoal;
-            _setTargetCalories(savedGoal);
-          });
-        }
-      }
-
       final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
       final apiService = ApiService();
       final meals = await apiService.getMeals(email);
@@ -171,7 +232,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 index: _currentIndex,
                 children: [
                   _buildHomeTab(),
-                  const ChatbotTab(),
+                  const RecommendationsTab(),
                   ScannerTab(
                     onScanSaved: () {
                       _fetchMeals();
@@ -195,64 +256,27 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FAF7),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppTheme.primaryColor.withOpacity(0.2),
-                width: 1.5,
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/hero-bot.png',
+              height: 32,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Nutrify',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryColor,
+                letterSpacing: -0.5,
               ),
             ),
-            child: const Icon(
-              Icons.person_outline_rounded,
-              color: AppTheme.primaryColor,
-              size: 22,
-            ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/hero-bot.png',
-                height: 32,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Nutrify',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.grey.shade200,
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              Icons.notifications_none_rounded,
-              color: Colors.grey.shade700,
-              size: 22,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -365,7 +389,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildNavItem(0, Icons.home_filled, 'Beranda'),
-                    _buildNavItem(1, Icons.chat_bubble_outline_rounded, 'Chatbot'),
+                    _buildNavItem(1, Icons.menu_book_rounded, 'Rekomendasi'),
                     const SizedBox(width: 60),
                     _buildNavItem(3, Icons.history_rounded, 'Riwayat'),
                     _buildNavItem(4, Icons.person_outline_rounded, 'Akun'),

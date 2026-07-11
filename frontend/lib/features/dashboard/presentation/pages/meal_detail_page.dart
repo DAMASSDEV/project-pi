@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
@@ -92,7 +93,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isBookmarked ? 'Makanan disimpan ke Bookmark.' : 'Makanan dihapus dari Bookmark.'),
+          content: Text(_isBookmarked ? 'Makanan disimpan ke Favorit.' : 'Makanan dihapus dari Favorit.'),
           backgroundColor: AppTheme.primaryColor,
           duration: const Duration(seconds: 1),
         ),
@@ -418,70 +419,155 @@ class _MealDetailPageState extends State<MealDetailPage> {
   // Edit Individual Ingredient Dialog
   Future<void> _editIngredient(int index) async {
     final ing = _ingredientsList[index];
-    final nameController = TextEditingController(text: ing['name']);
-    final caloriesController = TextEditingController(text: (ing['calories'] as num).toStringAsFixed(0));
-    final weightController = TextEditingController(text: (ing['weight'] as num).toStringAsFixed(0));
+    
+    String rawName = ing['name'] ?? 'Bahan';
+    double initialQty = 1.0;
+    String initialUnit = 'Potong';
+    
+    final regExp = RegExp(r'^(.+?)\s*\(\s*([\d\.]+)\s*(.+?)\s*\)$');
+    if (regExp.hasMatch(rawName)) {
+      final match = regExp.firstMatch(rawName)!;
+      rawName = match.group(1)!.trim();
+      initialQty = double.tryParse(match.group(2)!) ?? 1.0;
+      initialUnit = match.group(3)!.trim();
+    }
+
+    final nameController = TextEditingController(text: rawName);
+    final quantityController = TextEditingController(text: initialQty.toStringAsFixed(0));
+    String selectedUnit = ['Porsi', 'Potong', 'Iris', 'Mangkok', 'Gelas', 'Sendok Makan', 'Butir'].contains(initialUnit)
+        ? initialUnit
+        : 'Potong';
+    const List<String> units = ['Porsi', 'Potong', 'Iris', 'Mangkok', 'Gelas', 'Sendok Makan', 'Butir'];
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Edit Bahan Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nama Bahan'),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Ubah Bahan Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Nama Bahan'),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: quantityController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(labelText: 'Jumlah'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<String>(
+                          value: selectedUnit,
+                          decoration: const InputDecoration(labelText: 'Satuan'),
+                          items: units.map((unit) {
+                            return DropdownMenuItem<String>(
+                              value: unit,
+                              child: Text(unit),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDialogState(() {
+                                selectedUnit = val;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              TextField(
-                controller: caloriesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Kalori (kkal)'),
-              ),
-              TextField(
-                controller: weightController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Berat (g)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final newName = nameController.text.trim();
-                final newCals = double.tryParse(caloriesController.text.trim());
-                final newWeight = double.tryParse(weightController.text.trim());
-                if (newName.isEmpty || newCals == null || newWeight == null) return;
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final newName = nameController.text.trim();
+                    final qty = double.tryParse(quantityController.text.trim()) ?? 1.0;
+                    if (newName.isEmpty) return;
 
-                Navigator.pop(context);
-                setState(() {
-                  _ingredientsList[index] = {
-                    'name': newName,
-                    'calories': newCals,
-                    'weight': newWeight,
-                    'protein': newCals * 0.15 / 4,
-                    'carbs': newCals * 0.55 / 4,
-                    'fat': newCals * 0.30 / 9,
-                  };
-                });
-                _recalculateTotals();
-                await _saveChangesToBackend();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Simpan'),
-            ),
-          ],
+                    Navigator.pop(context);
+
+                    double unitWeight = 100.0;
+                    if (selectedUnit == 'Porsi') unitWeight = 150.0;
+                    else if (selectedUnit == 'Potong') unitWeight = 80.0;
+                    else if (selectedUnit == 'Iris') unitWeight = 20.0;
+                    else if (selectedUnit == 'Mangkok') unitWeight = 200.0;
+                    else if (selectedUnit == 'Gelas') unitWeight = 200.0;
+                    else if (selectedUnit == 'Sendok Makan') unitWeight = 15.0;
+                    else if (selectedUnit == 'Butir') unitWeight = 50.0;
+
+                    final totalWeight = qty * unitWeight;
+
+                    final key = newName.toLowerCase();
+                    String matchedKey = '';
+                    for (var k in _ingredientDatabase.keys) {
+                      if (key.contains(k) || k.contains(key)) {
+                        matchedKey = k;
+                        break;
+                      }
+                    }
+
+                    double calsPerGram = 1.2;
+                    double protPerGram = 1.2 * 0.15 / 4;
+                    double carbPerGram = 1.2 * 0.55 / 4;
+                    double fatPerGram = 1.2 * 0.30 / 9;
+
+                    if (matchedKey.isNotEmpty) {
+                      final dbItem = _ingredientDatabase[matchedKey]!;
+                      final dbWeight = (dbItem['weight'] ?? 100.0).toDouble();
+                      final dbCals = (dbItem['calories'] ?? 120.0).toDouble();
+                      
+                      calsPerGram = dbCals / dbWeight;
+                      protPerGram = ((dbItem['protein'] ?? (dbCals * 0.15 / 4)) / dbWeight).toDouble();
+                      carbPerGram = ((dbItem['carbs'] ?? (dbCals * 0.55 / 4)) / dbWeight).toDouble();
+                      fatPerGram = ((dbItem['fat'] ?? (dbCals * 0.30 / 9)) / dbWeight).toDouble();
+                    }
+
+                    final newCals = calsPerGram * totalWeight;
+                    final newProt = protPerGram * totalWeight;
+                    final newCarb = carbPerGram * totalWeight;
+                    final newFat = fatPerGram * totalWeight;
+
+                    setState(() {
+                      _ingredientsList[index] = {
+                        'name': '$newName ($qty $selectedUnit)',
+                        'calories': newCals,
+                        'weight': totalWeight,
+                        'protein': newProt,
+                        'carbs': newCarb,
+                        'fat': newFat,
+                      };
+                    });
+                    _recalculateTotals();
+                    await _saveChangesToBackend();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Simpan'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -490,70 +576,140 @@ class _MealDetailPageState extends State<MealDetailPage> {
   // Add New Ingredient Dialog
   Future<void> _addIngredient() async {
     final nameController = TextEditingController();
-    final caloriesController = TextEditingController(text: '100');
-    final weightController = TextEditingController(text: '100');
+    final quantityController = TextEditingController(text: '1');
+    String selectedUnit = 'Potong';
+    const List<String> units = ['Porsi', 'Potong', 'Iris', 'Mangkok', 'Gelas', 'Sendok Makan', 'Butir'];
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Tambah Bahan Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Nama Bahan'),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Tambah Bahan Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    autofocus: true,
+                    decoration: const InputDecoration(labelText: 'Nama Bahan'),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: quantityController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(labelText: 'Jumlah'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<String>(
+                          value: selectedUnit,
+                          decoration: const InputDecoration(labelText: 'Satuan'),
+                          items: units.map((unit) {
+                            return DropdownMenuItem<String>(
+                              value: unit,
+                              child: Text(unit),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDialogState(() {
+                                selectedUnit = val;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              TextField(
-                controller: caloriesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Kalori (kkal)'),
-              ),
-              TextField(
-                controller: weightController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Berat (g)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final newName = nameController.text.trim();
-                final newCals = double.tryParse(caloriesController.text.trim());
-                final newWeight = double.tryParse(weightController.text.trim());
-                if (newName.isEmpty || newCals == null || newWeight == null) return;
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final newName = nameController.text.trim();
+                    final qty = double.tryParse(quantityController.text.trim()) ?? 1.0;
+                    if (newName.isEmpty) return;
 
-                Navigator.pop(context);
-                setState(() {
-                  _ingredientsList.add({
-                    'name': newName,
-                    'calories': newCals,
-                    'weight': newWeight,
-                    'protein': newCals * 0.15 / 4,
-                    'carbs': newCals * 0.55 / 4,
-                    'fat': newCals * 0.30 / 9,
-                  });
-                });
-                _recalculateTotals();
-                await _saveChangesToBackend();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Tambah'),
-            ),
-          ],
+                    Navigator.pop(context);
+
+                    double unitWeight = 100.0;
+                    if (selectedUnit == 'Porsi') unitWeight = 150.0;
+                    else if (selectedUnit == 'Potong') unitWeight = 80.0;
+                    else if (selectedUnit == 'Iris') unitWeight = 20.0;
+                    else if (selectedUnit == 'Mangkok') unitWeight = 200.0;
+                    else if (selectedUnit == 'Gelas') unitWeight = 200.0;
+                    else if (selectedUnit == 'Sendok Makan') unitWeight = 15.0;
+                    else if (selectedUnit == 'Butir') unitWeight = 50.0;
+
+                    final totalWeight = qty * unitWeight;
+
+                    final key = newName.toLowerCase();
+                    String matchedKey = '';
+                    for (var k in _ingredientDatabase.keys) {
+                      if (key.contains(k) || k.contains(key)) {
+                        matchedKey = k;
+                        break;
+                      }
+                    }
+
+                    double calsPerGram = 1.2;
+                    double protPerGram = 1.2 * 0.15 / 4;
+                    double carbPerGram = 1.2 * 0.55 / 4;
+                    double fatPerGram = 1.2 * 0.30 / 9;
+
+                    if (matchedKey.isNotEmpty) {
+                      final dbItem = _ingredientDatabase[matchedKey]!;
+                      final dbWeight = (dbItem['weight'] ?? 100.0).toDouble();
+                      final dbCals = (dbItem['calories'] ?? 120.0).toDouble();
+                      
+                      calsPerGram = dbCals / dbWeight;
+                      protPerGram = ((dbItem['protein'] ?? (dbCals * 0.15 / 4)) / dbWeight).toDouble();
+                      carbPerGram = ((dbItem['carbs'] ?? (dbCals * 0.55 / 4)) / dbWeight).toDouble();
+                      fatPerGram = ((dbItem['fat'] ?? (dbCals * 0.30 / 9)) / dbWeight).toDouble();
+                    }
+
+                    final newCals = calsPerGram * totalWeight;
+                    final newProt = protPerGram * totalWeight;
+                    final newCarb = carbPerGram * totalWeight;
+                    final newFat = fatPerGram * totalWeight;
+
+                    setState(() {
+                      _ingredientsList.add({
+                        'name': '$newName ($qty $selectedUnit)',
+                        'calories': newCals,
+                        'weight': totalWeight,
+                        'protein': newProt,
+                        'carbs': newCarb,
+                        'fat': newFat,
+                      });
+                    });
+                    _recalculateTotals();
+                    await _saveChangesToBackend();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Tambah'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -754,7 +910,16 @@ class _MealDetailPageState extends State<MealDetailPage> {
                           ),
                           const Spacer(),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: 'Nutrify - Catatan Makanan: $_foodName (${_calories.toStringAsFixed(0)} kkal)'));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Catatan makanan berhasil disalin ke papan klip!'),
+                                  backgroundColor: AppTheme.primaryColor,
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
                             child: _buildTopActionButton(Icons.ios_share_rounded),
                           ),
                           const SizedBox(width: 10),
@@ -860,13 +1025,13 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     childAspectRatio: 2.1,
                     children: [
                       GestureDetector(
-                        onTap: () => _editMacro('calories', 'Calories', displayCalories),
+                        onTap: () => _editMacro('calories', 'Kalori', displayCalories),
                         child: _buildMacroCard(
                           icon: Icons.blur_on_rounded,
                           color: Colors.blue.shade50,
                           iconColor: Colors.blue.shade600,
                           value: '${displayCalories.toStringAsFixed(0)} kkal',
-                          label: 'Calories',
+                          label: 'Kalori',
                         ),
                       ),
                       GestureDetector(
@@ -880,23 +1045,23 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => _editMacro('carbs', 'Carbs', displayCarbs),
+                        onTap: () => _editMacro('carbs', 'Karbohidrat', displayCarbs),
                         child: _buildMacroCard(
                           icon: Icons.layers_rounded,
                           color: Colors.orange.shade50,
                           iconColor: Colors.orange.shade600,
                           value: '${displayCarbs.toStringAsFixed(0)}g',
-                          label: 'Carbs',
+                          label: 'Karbohidrat',
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => _editMacro('fat', 'Fat', displayFat),
+                        onTap: () => _editMacro('fat', 'Lemak', displayFat),
                         child: _buildMacroCard(
                           icon: Icons.eco_rounded,
                           color: Colors.green.shade50,
                           iconColor: Colors.green.shade600,
                           value: '${displayFat.toStringAsFixed(0)}g',
-                          label: 'Fat',
+                          label: 'Lemak',
                         ),
                       ),
                     ],
@@ -911,7 +1076,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Ingredient Breakdown',
+                        'Rincian Bahan',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -921,7 +1086,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
                       GestureDetector(
                         onTap: () => _editTotalWeight(totalWeight),
                         child: Text(
-                          'Edit total',
+                          'Ubah total',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -937,7 +1102,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    '${totalWeight.toStringAsFixed(0)}g total',
+                    'Total ${totalWeight.toStringAsFixed(0)}g',
                     style: TextStyle(
                       fontSize: 13.5,
                       color: Colors.grey.shade500,
@@ -1056,10 +1221,10 @@ class _MealDetailPageState extends State<MealDetailPage> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.white),
+                    Icon(Icons.add_rounded, size: 18, color: Colors.white),
                     SizedBox(width: 8),
                     Text(
-                      'Add Ingredients',
+                      'Tambah Bahan',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

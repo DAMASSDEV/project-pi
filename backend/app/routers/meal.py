@@ -3,81 +3,116 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 from app.models.meal import MealLog
+from app.models.food import Food
 from app.schemas.meal import MealLogCreate, MealLogResponse, ScanResponse
 
 router = APIRouter()
 
 @router.post("/api/meals/scan", response_model=ScanResponse)
-async def scan_meal(payload: dict):
+async def scan_meal(payload: dict, db: Session = Depends(get_db)):
     food_name = payload.get("food_name", "").strip()
+    if not food_name:
+        raise HTTPException(status_code=400, detail="Food name is required")
+
     name_lower = food_name.lower()
     
-    if "soto" in name_lower or "kuning" in name_lower:
-        return ScanResponse(
-            success=True,
-            food_name="Soto Kuning Bogor",
-            calories=380.0,
-            protein=22.0,
-            carbs=15.0,
-            fat=25.0,
-            health_score=75,
-            components="Daging Sapi, Kuah Santan, Soun, Telur Rebus, Seledri",
-            description="Soto Kuning khas Bogor yang gurih dengan protein hewani tinggi. Kandungan lemak jenuh dari kuah santan cukup tinggi, disarankan batasi kuahnya.",
-            image_path="assets/image3.png"
-        )
-    elif "asinan" in name_lower:
-        return ScanResponse(
-            success=True,
-            food_name="Asinan Bogor",
-            calories=150.0,
-            protein=3.0,
-            carbs=32.0,
-            fat=2.0,
-            health_score=92,
-            components="Tahu, Nanas, Bengkuang, Kedondong, Kacang Tanah, Kuah Cuka Cabai",
-            description="Hidangan asinan segar rendah lemak and kaya serat. Vitamin C tinggi dari buah-buahan segar membantu meningkatkan metabolisme tubuh.",
-            image_path="assets/image2.png"
-        )
-    elif "nasi" in name_lower or "goreng" in name_lower:
-        return ScanResponse(
-            success=True,
-            food_name="Nasi Goreng Spesial",
-            calories=510.0,
-            protein=14.0,
-            carbs=72.0,
-            fat=18.0,
-            health_score=62,
-            components="Nasi Putih, Telur Dada, Ayam Suwir, Minyak Goreng, Sayuran Pelengkap",
-            description="Nasi goreng dengan karbohidrat tinggi untuk energi instan. Kurangi penggunaan minyak berlebih untuk menjaga kesehatan jantung.",
-            image_path="assets/image1.png"
-        )
-    elif "salad" in name_lower or "chicken" in name_lower:
-        return ScanResponse(
-            success=True,
-            food_name="Chicken Salad Bowl",
-            calories=320.0,
-            protein=28.0,
-            carbs=12.0,
-            fat=16.0,
-            health_score=96,
-            components="Dada Ayam Panggang, Selada Hijau, Tomat Ceri, Alpukat, Dressing Minyak Zaitun",
-            description="Makanan padat gizi yang sangat tinggi protein untuk mendukung pembentukan otot dan lemak sehat untuk kesehatan otak.",
-            image_path="assets/image2.png"
-        )
+    # Try exact match or substring search
+    db_food = db.query(Food).filter(Food.food_name.ilike(f"%{food_name}%")).first()
+
+    # If not found, try word-by-word search
+    if not db_food:
+        words = name_lower.split()
+        for word in words:
+            if len(word) > 2:
+                db_food = db.query(Food).filter(Food.food_name.ilike(f"%{word}%")).first()
+                if db_food:
+                    break
+
+    # If still not found, fallback
+    if not db_food:
+        display_name = food_name.title()
+        calories = 250.0
+        protein = 10.0
+        carbs = 30.0
+        fat = 8.0
+        health_score = 75
+        components = "Bahan Segar Pilihan"
+        description = "Makanan kustom dengan profil gizi standar seimbang."
+        image_path = "assets/image3.png"
     else:
-        display_name = food_name if food_name else "Menu Makanan Kustom"
-        return ScanResponse(
-            success=True,
-            food_name=display_name,
-            calories=260.0,
-            protein=12.0,
-            carbs=30.0,
-            fat=10.0,
-            health_score=80,
-            components="Bahan Makanan Segar, Bumbu Dasar Seimbang",
-            description="Makanan dengan profil gizi yang seimbang. Pilihan yang baik untuk memenuhi kebutuhan makronutrisi harian Anda.",
-            image_path="assets/image3.png"
-        )
+        display_name = db_food.food_name.title()
+        calories = db_food.calories
+        protein = db_food.protein
+        carbs = db_food.carbohydrates
+        fat = db_food.fat
+        
+        # Calculate health score dynamically
+        if db_food.calorie_category == 'rendah':
+            base_score = 90
+        elif db_food.calorie_category == 'sedang':
+            base_score = 75
+        else:
+            base_score = 55
+            
+        if db_food.is_high_protein == 1:
+            base_score += 5
+        if db_food.is_high_fiber == 1:
+            base_score += 5
+        if db_food.is_high_sodium == 1:
+            base_score -= 10
+            
+        health_score = min(max(base_score, 10), 100)
+        
+        # Build description
+        desc_parts = [
+            f"Kandungan gizi per porsi ({db_food.serving_size_g}g): Energi sebesar {calories} kkal, Protein {protein}g, Karbohidrat {carbs}g, dan Lemak {fat}g."
+        ]
+        
+        if db_food.is_high_protein == 1:
+            desc_parts.append("Makanan ini tergolong tinggi protein, yang sangat baik untuk pembentukan massa otot dan pemulihan tubuh.")
+        if db_food.is_high_fiber == 1:
+            desc_parts.append("Kandungan seratnya tinggi, baik untuk pencernaan sehat dan membantu kenyang lebih lama.")
+        if db_food.is_high_sodium == 1:
+            desc_parts.append("Perhatian: makanan ini mengandung natrium (garam) yang tinggi. Disarankan membatasi porsi konsumsi untuk menjaga kesehatan jantung.")
+            
+        # Add custom recommendations based on food type
+        if "asinan" in name_lower:
+            desc_parts.append("Asinan Bogor kaya akan serat dan vitamin dari sayuran/buah segar, sangat baik sebagai camilan sehat.")
+            components = "Buah segar, sayur asin, kuah cuka merah, tahu, kacang tanah goreng"
+            image_path = "assets/image2.png"
+        elif "soto" in name_lower:
+            desc_parts.append("Batasi konsumsi kuah santan soto untuk menjaga kestabilan kadar lemak jenuh harian Anda.")
+            components = "Daging sapi/ayam, kuah santan kuning, bihun, emping, daun bawang"
+            image_path = "assets/image3.png"
+        elif "doclang" in name_lower:
+            desc_parts.append("Doclang merupakan sumber karbohidrat dan protein yang padat. Kurangi porsi saus kacang berlebih untuk menghemat kalori.")
+            components = "Ketupat, tahu goreng, kentang rebus, telur rebus, saus kacang, kecap manis"
+            image_path = "assets/image1.png"
+        elif "laksa" in name_lower:
+            desc_parts.append("Laksa Bogor kaya protein dari oncom dan tahu, namun kuah bersantannya cukup pekat, konsumsilah dalam batas wajar.")
+            components = "Ketupat, bihun, tauge, kemangi, oncom merah, kuah santan laksa"
+            image_path = "assets/image2.png"
+        elif "toge" in name_lower:
+            desc_parts.append("Toge Goreng merupakan hidangan gurih kaya protein nabati dari tahu dan tauco. Pilihan yang lezat dan rendah lemak.")
+            components = "Toge rebus, tahu kuning, ketupat, mie kuning, kuah tauco gurih"
+            image_path = "assets/image1.png"
+        else:
+            components = "Bahan makanan olahan segar"
+            image_path = "assets/image3.png"
+        description = " ".join(desc_parts)
+
+    return ScanResponse(
+        success=True,
+        food_name=display_name,
+        calories=calories,
+        protein=protein,
+        carbs=carbs,
+        fat=fat,
+        health_score=health_score,
+        components=components,
+        description=description,
+        image_path=image_path
+    )
 
 @router.post("/api/meals", response_model=MealLogResponse)
 async def save_meal(payload: MealLogCreate, db: Session = Depends(get_db)):

@@ -183,7 +183,7 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
             SizedBox(width: 8),
             Text(
-              'Logout',
+              'Keluar',
               style: TextStyle(
                 color: Color(0xFFEB5757),
                 fontSize: 16,
