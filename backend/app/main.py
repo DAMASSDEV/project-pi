@@ -83,6 +83,16 @@ def populate_foods():
     finally:
         db.close()
 
+def migrate_meal_logs_portion_column():
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE meal_logs ADD COLUMN portion FLOAT DEFAULT 1.0"))
+            conn.commit()
+            print("Migration: added 'portion' column to meal_logs.")
+    except Exception:
+        pass
+
 @app.on_event("startup")
 def on_startup():
     retries = 10
@@ -90,6 +100,7 @@ def on_startup():
         try:
             Base.metadata.create_all(bind=engine)
             print("Successfully connected to the database and created tables.")
+            migrate_meal_logs_portion_column()
             populate_foods()
             break
         except OperationalError as e:

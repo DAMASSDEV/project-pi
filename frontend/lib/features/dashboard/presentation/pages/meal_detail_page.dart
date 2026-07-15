@@ -193,6 +193,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
     _protein = (widget.meal['protein'] as num?)?.toDouble() ?? 0.0;
     _carbs = (widget.meal['carbs'] as num?)?.toDouble() ?? 0.0;
     _fat = (widget.meal['fat'] as num?)?.toDouble() ?? 0.0;
+    _portion = (widget.meal['portion'] as num?)?.toDouble() ?? 1.0;
     _ingredientsList = _parseIngredients();
   }
 
@@ -295,15 +296,14 @@ class _MealDetailPageState extends State<MealDetailPage> {
     final mealId = widget.meal['id'] as int;
     final componentsStr = _ingredientsList.map((e) => e['name']).join(', ');
 
-    // The saved values should represent the portioned values if the user scaled it,
-    // keeping the database sync simple and clean.
     final payload = {
       'food_name': _foodName,
-      'calories': _calories * _portion,
-      'protein': _protein * _portion,
-      'carbs': _carbs * _portion,
-      'fat': _fat * _portion,
+      'calories': _calories,
+      'protein': _protein,
+      'carbs': _carbs,
+      'fat': _fat,
       'components': componentsStr,
+      'portion': _portion,
     };
 
     try {
@@ -319,13 +319,12 @@ class _MealDetailPageState extends State<MealDetailPage> {
           );
         }
 
-        // Reset local portion multiplier to 1 since database now holds the scaled values
         setState(() {
-          _portion = 1.0;
           _calories = (res['meal']['calories'] as num).toDouble();
           _protein = (res['meal']['protein'] as num).toDouble();
           _carbs = (res['meal']['carbs'] as num).toDouble();
           _fat = (res['meal']['fat'] as num).toDouble();
+          _portion = (res['meal']['portion'] as num?)?.toDouble() ?? _portion;
         });
 
         if (widget.onDeleteSuccess != null) {

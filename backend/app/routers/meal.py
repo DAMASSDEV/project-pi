@@ -153,7 +153,8 @@ async def save_meal(payload: MealLogCreate, db: Session = Depends(get_db)):
         components=payload.components,
         timestamp=payload.timestamp,
         image_path=payload.image_path,
-        is_manual=payload.is_manual
+        is_manual=payload.is_manual,
+        portion=payload.portion
     )
     db.add(db_meal)
     db.commit()
@@ -192,7 +193,9 @@ async def update_meal(meal_id: int, payload: dict, db: Session = Depends(get_db)
         db_meal.fat = payload["fat"]
     if "components" in payload:
         db_meal.components = payload["components"]
-        
+    if "portion" in payload:
+        db_meal.portion = payload["portion"]
+
     db.commit()
     db.refresh(db_meal)
     return {"success": True, "meal": {
@@ -206,7 +209,8 @@ async def update_meal(meal_id: int, payload: dict, db: Session = Depends(get_db)
         "components": db_meal.components,
         "timestamp": db_meal.timestamp,
         "image_path": db_meal.image_path,
-        "is_manual": db_meal.is_manual
+        "is_manual": db_meal.is_manual,
+        "portion": db_meal.portion
     }}
 
 import os

@@ -16,3 +16,4 @@ class MealLog(Base):
     timestamp = Column(String, nullable=False)
     image_path = Column(String, nullable=False)
     is_manual = Column(Boolean, default=False)
+    portion = Column(Float, nullable=False, default=1.0)

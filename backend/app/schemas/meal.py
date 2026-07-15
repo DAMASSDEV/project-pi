@@ -12,6 +12,7 @@ class MealLogCreate(BaseModel):
     timestamp: str
     image_path: str
     is_manual: bool = False
+    portion: float = 1.0
 
 class MealLogResponse(BaseModel):
     id: int
@@ -26,6 +27,7 @@ class MealLogResponse(BaseModel):
     timestamp: str
     image_path: str
     is_manual: bool
+    portion: float
 
     class Config:
         from_attributes = True
