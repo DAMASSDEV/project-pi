@@ -642,15 +642,15 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
         final description = data['description'] as String;
         final components = data['components'] as String;
         final imgPath = data['image_path'] as String;
+        final confidence = (data['confidence'] as num?)?.toDouble();
 
-        String grade = 'A';
-        Color gradeColor = Colors.green;
-        if (score < 70) {
-          grade = 'C';
-          gradeColor = Colors.orange;
-        } else if (score < 85) {
-          grade = 'B';
-          gradeColor = Colors.blue;
+        Color confidenceColor = Colors.green;
+        if (confidence != null) {
+          if (confidence < 0.5) {
+            confidenceColor = Colors.orange;
+          } else if (confidence < 0.85) {
+            confidenceColor = Colors.blue;
+          }
         }
 
         return DraggableScrollableSheet(
@@ -708,36 +708,37 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: gradeColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Skor: ',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: gradeColor,
-                                  fontWeight: FontWeight.bold,
+                        if (confidence != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: confidenceColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Akurasi: ',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: confidenceColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                grade,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: gradeColor,
-                                  fontWeight: FontWeight.w900,
+                                Text(
+                                  '${(confidence * 100).toStringAsFixed(0)}%',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: confidenceColor,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 24),

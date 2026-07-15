@@ -195,6 +195,41 @@ class _MealDetailPageState extends State<MealDetailPage> {
     _fat = (widget.meal['fat'] as num?)?.toDouble() ?? 0.0;
     _portion = (widget.meal['portion'] as num?)?.toDouble() ?? 1.0;
     _ingredientsList = _parseIngredients();
+    _refineIngredientsFromDatabase();
+  }
+
+  Future<void> _refineIngredientsFromDatabase() async {
+    for (int i = 0; i < _ingredientsList.length; i++) {
+      final name = _ingredientsList[i]['name'] as String;
+      final results = await _apiService.searchFoods(name);
+      if (results.isEmpty) continue;
+
+      final match = results.firstWhere(
+        (r) => (r['food_name'] as String).toLowerCase() == name.toLowerCase(),
+        orElse: () => results.first,
+      );
+      final servingSize = (match['serving_size_g'] as num).toDouble();
+      if (servingSize <= 0) continue;
+
+      final weight = (_ingredientsList[i]['weight'] as num).toDouble();
+      final ratio = weight / servingSize;
+      final cals = (match['calories'] as num).toDouble() * ratio;
+      final prot = (match['protein'] as num).toDouble() * ratio;
+      final carb = (match['carbs'] as num).toDouble() * ratio;
+      final fatVal = (match['fat'] as num).toDouble() * ratio;
+
+      if (!mounted) return;
+      setState(() {
+        _ingredientsList[i] = {
+          'name': name,
+          'calories': cals,
+          'weight': weight,
+          'protein': prot,
+          'carbs': carb,
+          'fat': fatVal,
+        };
+      });
+    }
   }
 
   @override

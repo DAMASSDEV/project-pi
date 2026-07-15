@@ -3,7 +3,46 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/skeleton.dart';
 
 class InsightSectionWidget extends StatelessWidget {
-  const InsightSectionWidget({super.key});
+  final double consumedCalories;
+  final double targetCalories;
+  final double consumedProtein;
+  final double targetProtein;
+  final double consumedCarbs;
+  final double targetCarbs;
+  final double consumedFat;
+  final double targetFat;
+
+  const InsightSectionWidget({
+    super.key,
+    required this.consumedCalories,
+    required this.targetCalories,
+    required this.consumedProtein,
+    required this.targetProtein,
+    required this.consumedCarbs,
+    required this.targetCarbs,
+    required this.consumedFat,
+    required this.targetFat,
+  });
+
+  String _buildTip() {
+    if (targetCalories > 0 && consumedCalories >= targetCalories) {
+      return 'Kerja bagus! Anda sudah mencapai target kalori hari ini. Jaga porsi makan agar tidak berlebihan untuk sisa hari ini.';
+    }
+    if (targetProtein > 0 && consumedProtein < targetProtein * 0.8) {
+      return 'Asupan protein Anda masih dibawah target. Coba tambahkan sumber protein seperti telur, ayam, atau kacang-kacangan dimenu berikutnya.';
+    }
+    if (targetFat > 0 && consumedFat > targetFat) {
+      return 'Asupan lemak Anda sudah melebihi target hari ini. Kurangi makanan bersantan atau gorengan untuk sisa hari ini.';
+    }
+    if (targetCarbs > 0 && consumedCarbs > targetCarbs) {
+      return 'Asupan karbohidrat Anda sudah melebihi target hari ini. Pertimbangkan menu rendah karbo untuk makan berikutnya.';
+    }
+    final remainingCalories = (targetCalories - consumedCalories).clamp(
+      0,
+      targetCalories,
+    );
+    return 'Anda masih punya ${remainingCalories.toStringAsFixed(0)} kkal tersisa hari ini. Pilih makanan bergizi seimbang untuk melengkapi kebutuhan harian Anda.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +52,7 @@ class InsightSectionWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFF0FAF7),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppTheme.primaryColor.withOpacity(0.12),
-          ),
+          border: Border.all(color: AppTheme.primaryColor.withOpacity(0.12)),
         ),
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -32,7 +69,7 @@ class InsightSectionWidget extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Asupan protein anda masih dibawah target. Coba tambahkan sumber protein seperti telur, ayam, atau kacang-kacangan dimenu berikutnya.',
+              _buildTip(),
               style: TextStyle(
                 fontSize: 13.5,
                 color: Colors.grey.shade800,
@@ -58,9 +95,7 @@ class InsightSectionSkeleton extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFF0FAF7),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppTheme.primaryColor.withOpacity(0.08),
-          ),
+          border: Border.all(color: AppTheme.primaryColor.withOpacity(0.08)),
         ),
         padding: const EdgeInsets.all(20),
         child: const Column(

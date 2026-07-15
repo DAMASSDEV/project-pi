@@ -1,13 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.security import get_current_user_email
 from app.schemas.personalization import PersonalizationRequest, PersonalizationResponse
 from app.models.personalization import Personalization
 
 router = APIRouter()
 
 @router.post("/api/personalization", response_model=PersonalizationResponse)
-async def save_personalization(payload: PersonalizationRequest, db: Session = Depends(get_db)):
+async def save_personalization(
+    payload: PersonalizationRequest,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user_email),
+):
+    if current_user != payload.email:
+        raise HTTPException(status_code=403, detail="Tidak diizinkan mengubah data pengguna lain.")
+
     db_personal = db.query(Personalization).filter(Personalization.email == payload.email).first()
     if db_personal:
         db_personal.name = payload.name
@@ -49,7 +57,14 @@ async def save_personalization(payload: PersonalizationRequest, db: Session = De
     )
 
 @router.get("/api/personalization/{email}")
-async def get_personalization(email: str, db: Session = Depends(get_db)):
+async def get_personalization(
+    email: str,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user_email),
+):
+    if current_user != email:
+        raise HTTPException(status_code=403, detail="Tidak diizinkan melihat data pengguna lain.")
+
     db_personal = db.query(Personalization).filter(Personalization.email == email).first()
     if not db_personal:
         raise HTTPException(status_code=404, detail="Data personalisasi belum tersedia.")

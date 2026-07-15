@@ -62,6 +62,7 @@ class _ProfileTabState extends State<ProfileTab> {
     await prefs.remove('logged_in_email');
     await prefs.remove('logged_in_username');
     await prefs.remove('logged_in_name');
+    await prefs.remove('logged_in_token');
     await prefs.remove('has_completed_personalization');
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(

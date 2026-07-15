@@ -24,6 +24,7 @@ backend/.env
 backend/.pytest_cache/
 backend/.cache/
 backend/uploads/
+backend/local_nutrify.db
 *.pyc
 *.pyo
 *.pyd

@@ -1,7 +1,9 @@
 import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from app.core.config import LOG_LEVEL
 from app.core.database import engine, Base
 from app.routers.auth import router as auth_router
 from app.routers.chat import router as chat_router
@@ -9,6 +11,11 @@ from app.routers.personalization import router as personalization_router
 from app.routers.health import router as health_router
 from app.routers.meal import router as meal_router
 import app.models
+
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
 
 app = FastAPI()
 
@@ -93,6 +100,16 @@ def migrate_meal_logs_portion_column():
     except Exception:
         pass
 
+def migrate_password_reset_created_at_column():
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE password_reset_tokens ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+            conn.commit()
+            print("Migration: added 'created_at' column to password_reset_tokens.")
+    except Exception:
+        pass
+
 @app.on_event("startup")
 def on_startup():
     retries = 10
@@ -101,6 +118,7 @@ def on_startup():
             Base.metadata.create_all(bind=engine)
             print("Successfully connected to the database and created tables.")
             migrate_meal_logs_portion_column()
+            migrate_password_reset_created_at_column()
             populate_foods()
             break
         except OperationalError as e:

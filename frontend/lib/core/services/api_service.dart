@@ -9,6 +9,15 @@ class ApiService {
 
   final http.Client _client = http.Client();
 
+  Future<Map<String, String>> _authHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('logged_in_token');
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   Future<Map<String, dynamic>> sendChatMessage(String message) async {
     final url = Uri.parse('$baseUrl/api/chat');
     try {
@@ -46,6 +55,9 @@ class ApiService {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('logged_in_email', email);
           await prefs.setString('logged_in_username', email);
+          if (data['token'] != null) {
+            await prefs.setString('logged_in_token', data['token']);
+          }
           if (data['user'] != null) {
             if (data['user']['name'] != null) {
               await prefs.setString('logged_in_name', data['user']['name']);
@@ -90,7 +102,12 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        if (data['success'] == true && data['token'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('logged_in_token', data['token']);
+        }
+        return data;
       } else {
         try {
           final errorData = jsonDecode(response.body);
@@ -122,7 +139,7 @@ class ApiService {
 
       final response = await _client.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
         body: jsonEncode(data),
       );
 
@@ -228,7 +245,7 @@ class ApiService {
     try {
       final response = await _client.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
         body: jsonEncode(mealData),
       );
       if (response.statusCode == 200) {
@@ -250,7 +267,7 @@ class ApiService {
       '$baseUrl/api/meals?email=${Uri.encodeComponent(email)}',
     );
     try {
-      final response = await _client.get(url);
+      final response = await _client.get(url, headers: await _authHeaders());
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
       } else {
@@ -264,7 +281,10 @@ class ApiService {
   Future<Map<String, dynamic>> deleteMeal(int mealId) async {
     final url = Uri.parse('$baseUrl/api/meals/$mealId');
     try {
-      final response = await _client.delete(url);
+      final response = await _client.delete(
+        url,
+        headers: await _authHeaders(),
+      );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
@@ -286,7 +306,7 @@ class ApiService {
     try {
       final response = await _client.put(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(),
         body: jsonEncode(mealData),
       );
       if (response.statusCode == 200) {
@@ -336,7 +356,7 @@ class ApiService {
       '$baseUrl/api/personalization/${Uri.encodeComponent(email)}',
     );
     try {
-      final response = await _client.get(url);
+      final response = await _client.get(url, headers: await _authHeaders());
       if (response.statusCode == 200) {
         final res = jsonDecode(response.body) as Map<String, dynamic>;
         if (res['success'] == true && res['data'] != null) {

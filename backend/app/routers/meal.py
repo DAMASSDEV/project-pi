@@ -1,12 +1,15 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
+from app.core.security import get_current_user_email
 from app.models.meal import MealLog
 from app.models.food import Food
 from app.schemas.meal import MealLogCreate, MealLogResponse, ScanResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.get("/api/foods/search")
 async def search_foods(q: str = Query(...), db: Session = Depends(get_db)):
@@ -141,7 +144,14 @@ async def scan_meal(payload: dict, db: Session = Depends(get_db)):
     )
 
 @router.post("/api/meals", response_model=MealLogResponse)
-async def save_meal(payload: MealLogCreate, db: Session = Depends(get_db)):
+async def save_meal(
+    payload: MealLogCreate,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user_email),
+):
+    if current_user != payload.email:
+        raise HTTPException(status_code=403, detail="Tidak diizinkan menyimpan atas nama pengguna lain.")
+
     db_meal = MealLog(
         email=payload.email,
         food_name=payload.food_name,
@@ -162,25 +172,54 @@ async def save_meal(payload: MealLogCreate, db: Session = Depends(get_db)):
     return db_meal
 
 @router.get("/api/meals", response_model=List[MealLogResponse])
-async def get_meals(email: str = Query(...), db: Session = Depends(get_db)):
-    meals = db.query(MealLog).filter(MealLog.email == email).order_by(MealLog.id.desc()).all()
+async def get_meals(
+    email: str = Query(...),
+    limit: int = Query(500, le=1000, gt=0),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user_email),
+):
+    if current_user != email:
+        raise HTTPException(status_code=403, detail="Tidak diizinkan melihat data pengguna lain.")
+
+    meals = (
+        db.query(MealLog)
+        .filter(MealLog.email == email)
+        .order_by(MealLog.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
     return meals
 
 @router.delete("/api/meals/{meal_id}")
-async def delete_meal(meal_id: int, db: Session = Depends(get_db)):
+async def delete_meal(
+    meal_id: int,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user_email),
+):
     db_meal = db.query(MealLog).filter(MealLog.id == meal_id).first()
     if not db_meal:
         raise HTTPException(status_code=404, detail="Meal log not found")
+    if db_meal.email != current_user:
+        raise HTTPException(status_code=403, detail="Tidak diizinkan menghapus catatan pengguna lain.")
     db.delete(db_meal)
     db.commit()
     return {"success": True, "message": "Catatan makanan berhasil dihapus."}
 
 @router.put("/api/meals/{meal_id}")
-async def update_meal(meal_id: int, payload: dict, db: Session = Depends(get_db)):
+async def update_meal(
+    meal_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: str = Depends(get_current_user_email),
+):
     db_meal = db.query(MealLog).filter(MealLog.id == meal_id).first()
     if not db_meal:
         raise HTTPException(status_code=404, detail="Meal log not found")
-    
+    if db_meal.email != current_user:
+        raise HTTPException(status_code=403, detail="Tidak diizinkan mengubah catatan pengguna lain.")
+
     if "food_name" in payload:
         db_meal.food_name = payload["food_name"]
     if "calories" in payload:
@@ -227,7 +266,6 @@ if not os.path.exists(MODEL_PATH):
 if not os.path.exists(MODEL_PATH):
     MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../ai-model/bogor_yolo_best.pt")
 
-import sys
 import traceback
 
 yolo_model = None
@@ -249,13 +287,12 @@ try:
         log_messages.append("Model YOLO tidak ditemukan di path manapun.")
         
     log_content = "\n".join(log_messages)
-    print(log_content, flush=True)
+    logger.info(log_content)
     with open("yolo_startup.log", "w") as f:
         f.write(log_content)
 except Exception as e:
     err_msg = f"Gagal memuat model YOLO: {e}\n{traceback.format_exc()}"
-    sys.stderr.write(err_msg + "\n")
-    sys.stderr.flush()
+    logger.error(err_msg)
     try:
         with open("yolo_startup.log", "w") as f:
             f.write(err_msg)
@@ -277,26 +314,26 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
     detected_confidence = 0.0
     portion_scale = 1.0
 
-    print(f"DEBUG: Memulai pemindaian gambar. Status yolo_model: {yolo_model is not None}")
+    logger.debug(f"Memulai pemindaian gambar. Status yolo_model: {yolo_model is not None}")
     if yolo_model is not None:
         try:
             results = yolo_model(saved_path, verbose=False)
             if results and len(results) > 0:
                 boxes = results[0].boxes
                 if boxes is not None and len(boxes) > 0:
-                    print(f"DEBUG: Menemukan {len(boxes)} boxes.")
+                    logger.debug(f"Menemukan {len(boxes)} boxes.")
                     for idx, box in enumerate(boxes):
                         c = float(box.conf[0])
                         cid = int(box.cls[0])
                         nm = yolo_model.names[cid]
-                        print(f"DEBUG: Box #{idx} -> Class: {nm} ({cid}), Conf: {c:.4f}")
+                        logger.debug(f"Box #{idx} -> Class: {nm} ({cid}), Conf: {c:.4f}")
 
                     best_box = max(boxes, key=lambda x: float(x.conf[0]))
                     conf = float(best_box.conf[0])
                     cls_id = int(best_box.cls[0])
                     detected_name = yolo_model.names[cls_id]
                     detected_confidence = conf
-                    print(f"DEBUG: Box terbaik -> {detected_name} dengan Conf: {conf:.4f}")
+                    logger.debug(f"Box terbaik -> {detected_name} dengan Conf: {conf:.4f}")
 
                     try:
                         img_h, img_w = results[0].orig_shape
@@ -306,21 +343,21 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
                         area_ratio = box_area / image_area if image_area > 0 else 0.0
                         baseline_ratio = 0.35
                         portion_scale = area_ratio / baseline_ratio if baseline_ratio > 0 else 1.0
-                        portion_scale = max(0.7, min(portion_scale, 1.5))
-                        print(f"DEBUG: Area rasio bounding box: {area_ratio:.3f}, portion_scale: {portion_scale:.2f}")
+                        portion_scale = max(0.85, min(portion_scale, 1.25))
+                        logger.debug(f"Area rasio bounding box: {area_ratio:.3f}, portion_scale: {portion_scale:.2f}")
                     except Exception as e:
-                        print(f"DEBUG: Gagal menghitung portion_scale, pakai default 1.0: {e}")
+                        logger.debug(f"Gagal menghitung portion_scale, pakai default 1.0: {e}")
                         portion_scale = 1.0
 
                     if conf < CONFIDENCE_THRESHOLD:
-                        print(f"DEBUG: Conf {conf:.4f} di bawah threshold {CONFIDENCE_THRESHOLD}. Diabaikan.")
+                        logger.debug(f"Conf {conf:.4f} di bawah threshold {CONFIDENCE_THRESHOLD}. Diabaikan.")
                         detected_name = None
                 else:
-                    print("DEBUG: Tidak ada boxes terdeteksi.")
+                    logger.debug("Tidak ada boxes terdeteksi.")
         except Exception as e:
-            print(f"DEBUG: Error saat prediksi YOLO: {e}")
+            logger.debug(f"Error saat prediksi YOLO: {e}")
     else:
-        print("DEBUG: yolo_model bernilai None! Model gagal dimuat saat startup.")
+        logger.debug("yolo_model bernilai None! Model gagal dimuat saat startup.")
 
     if detected_name is not None:
         scan_result = await scan_meal({"food_name": detected_name}, db)
@@ -336,7 +373,8 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
             description=scan_result.description,
             image_path=image_url,
             is_bogor_food=True,
-            alert_message=""
+            alert_message="",
+            confidence=round(detected_confidence, 4)
         )
     else:
         return ScanResponse(

@@ -50,11 +50,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _setTargetCalories(Map<String, dynamic> data) {
     final String goal = data['goal'] ?? 'Menjaga Berat Badan';
-    final double weight = double.tryParse(data['weight']?.toString() ?? '') ?? 70.0;
-    final double height = double.tryParse(data['height']?.toString() ?? '') ?? 170.0;
+    final double weight =
+        double.tryParse(data['weight']?.toString() ?? '') ?? 70.0;
+    final double height =
+        double.tryParse(data['height']?.toString() ?? '') ?? 170.0;
     final String gender = (data['gender'] ?? 'Laki-laki').toString();
-    final String activity = (data['activity'] ?? 'Jarang').toString().toLowerCase();
-    
+    final String activity = (data['activity'] ?? 'Jarang')
+        .toString()
+        .toLowerCase();
+
     int age = 25;
     if (data['dob'] != null && data['dob'].toString().isNotEmpty) {
       try {
@@ -64,7 +68,9 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     double bmr = 0;
-    if (gender == 'Perempuan' || gender.toLowerCase().contains('wanita') || gender.toLowerCase().contains('female')) {
+    if (gender == 'Perempuan' ||
+        gender.toLowerCase().contains('wanita') ||
+        gender.toLowerCase().contains('female')) {
       bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
     } else {
       bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
@@ -73,7 +79,9 @@ class _DashboardPageState extends State<DashboardPage> {
     double multiplier = 1.2;
     if (activity.contains('sangat aktif') || activity.contains('6-7')) {
       multiplier = 1.725;
-    } else if (activity.contains('cukup aktif') || activity.contains('3-5') || activity.contains('sedang')) {
+    } else if (activity.contains('cukup aktif') ||
+        activity.contains('3-5') ||
+        activity.contains('sedang')) {
       multiplier = 1.55;
     } else if (activity.contains('jarang') || activity.contains('1-3')) {
       multiplier = 1.375;
@@ -132,17 +140,18 @@ class _DashboardPageState extends State<DashboardPage> {
 
   bool _isMealOnSelectedDay(Map<String, dynamic> meal, int selectedDay) {
     final timestamp = meal['timestamp'] as String? ?? '';
-    
+
     final now = DateTime.now();
-    final datePrefix = "${now.year}-${now.month.toString().padLeft(2, '0')}-${selectedDay.toString().padLeft(2, '0')}";
+    final datePrefix =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${selectedDay.toString().padLeft(2, '0')}";
     if (timestamp.startsWith(datePrefix)) {
       return true;
     }
-    
+
     if (timestamp.contains("Hari Ini") && selectedDay == now.day) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -176,7 +185,8 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _loadWaterIntake() async {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
-    final key = 'water_intake_${now.year}_${now.month.toString().padLeft(2, '0')}_$_selectedCalendarDay';
+    final key =
+        'water_intake_${now.year}_${now.month.toString().padLeft(2, '0')}_$_selectedCalendarDay';
     if (mounted) {
       setState(() {
         _waterIntakeCups = prefs.getInt(key) ?? 0;
@@ -187,7 +197,8 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _saveWaterIntake(int cups) async {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
-    final key = 'water_intake_${now.year}_${now.month.toString().padLeft(2, '0')}_$_selectedCalendarDay';
+    final key =
+        'water_intake_${now.year}_${now.month.toString().padLeft(2, '0')}_$_selectedCalendarDay';
     await prefs.setInt(key, cups);
     if (mounted) {
       setState(() {
@@ -252,11 +263,7 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              'assets/hero-bot.png',
-              height: 32,
-              fit: BoxFit.contain,
-            ),
+            Image.asset('assets/hero-bot.png', height: 32, fit: BoxFit.contain),
             const SizedBox(width: 8),
             const Text(
               'Nutrify',
@@ -352,7 +359,16 @@ class _DashboardPageState extends State<DashboardPage> {
               },
             ),
             const SizedBox(height: 24),
-            const InsightSectionWidget(),
+            InsightSectionWidget(
+              consumedCalories: _consumedCalories,
+              targetCalories: targetCalories,
+              consumedProtein: _consumedProtein,
+              targetProtein: 130.0,
+              consumedCarbs: _consumedCarbs,
+              targetCarbs: 300.0,
+              consumedFat: _consumedFat,
+              targetFat: 90.0,
+            ),
           ],
         ),
       ),
@@ -366,13 +382,20 @@ class _DashboardPageState extends State<DashboardPage> {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomPadding > 0 ? bottomPadding : 12.0),
+      padding: EdgeInsets.only(
+        bottom: bottomPadding > 0 ? bottomPadding : 12.0,
+      ),
       child: Stack(
         alignment: Alignment.topCenter,
         clipBehavior: Clip.none,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 18),
+            padding: const EdgeInsets.only(
+              left: 20,
+              right: 20,
+              bottom: 20,
+              top: 18,
+            ),
             child: CustomPaint(
               painter: FloatingNotchedPainter(),
               child: SizedBox(
@@ -390,10 +413,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
           ),
-          Positioned(
-            top: -6,
-            child: _buildCenterScanButton(),
-          ),
+          Positioned(top: -6, child: _buildCenterScanButton()),
         ],
       ),
     );
@@ -442,10 +462,7 @@ class _DashboardPageState extends State<DashboardPage> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF2DD4BF),
-            AppTheme.primaryColor,
-          ],
+          colors: [Color(0xFF2DD4BF), AppTheme.primaryColor],
         ),
         boxShadow: [
           BoxShadow(
@@ -482,10 +499,7 @@ class _DashboardPageState extends State<DashboardPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.primaryColor,
-                  Color(0xFF0F766E),
-                ],
+                colors: [AppTheme.primaryColor, Color(0xFF0F766E)],
               ),
             ),
             child: const Icon(

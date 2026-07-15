@@ -18,3 +18,5 @@ JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))
 SMTP_EMAIL = os.getenv("SMTP_EMAIL", "")
 SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD", "")
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://api-nutrify.damassdev.my.id")
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

@@ -1,4 +1,5 @@
 import secrets
+import logging
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Form
 from fastapi.responses import HTMLResponse
@@ -22,8 +23,10 @@ from app.models.password_reset import PasswordResetToken
 from app.services.email_service import EmailService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 RESET_TOKEN_EXPIRE_MINUTES = 30
+RESET_REQUEST_COOLDOWN_SECONDS = 60
 
 def _render_reset_page(token: str, error: str | None = None, show_form: bool = True) -> str:
     error_html = f'<p class="error">{error}</p>' if error else ""
@@ -154,10 +157,19 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(
     if not user:
         raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
 
+    cooldown_cutoff = datetime.utcnow() - timedelta(seconds=RESET_REQUEST_COOLDOWN_SECONDS)
+    recent_request = db.query(PasswordResetToken).filter(
+        PasswordResetToken.email == user.email,
+        PasswordResetToken.created_at > cooldown_cutoff,
+    ).first()
+    if recent_request:
+        raise HTTPException(status_code=429, detail="Tunggu beberapa saat sebelum meminta tautan pemulihan lagi.")
+
     token = secrets.token_urlsafe(32)
     db.add(PasswordResetToken(
         token=token,
         email=user.email,
+        created_at=datetime.utcnow(),
         expires_at=datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
         used=False,
     ))
@@ -167,7 +179,7 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(
     try:
         EmailService.send_password_reset_email(user.email, reset_link)
     except Exception as e:
-        print(f"DEBUG: Gagal mengirim email pemulihan ke {user.email}: {e}")
+        logger.debug(f"Gagal mengirim email pemulihan ke {user.email}: {e}")
 
     return ForgotPasswordResponse(
         success=True,
