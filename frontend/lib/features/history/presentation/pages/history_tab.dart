@@ -17,7 +17,7 @@ class HistoryTab extends StatefulWidget {
 
 class _HistoryTabState extends State<HistoryTab> {
   final ApiService _apiService = ApiService();
-  String _selectedRange = 'Minggu Ini';
+  String _selectedRange = 'Semua';
   String _selectedSort = 'Terbaru';
   bool _isLoading = true;
   List<dynamic> _allMeals = [];
@@ -55,7 +55,7 @@ class _HistoryTabState extends State<HistoryTab> {
 
   bool _isMealInSelectedRange(Map<String, dynamic> meal, String range) {
     final timestamp = meal['timestamp'] as String? ?? '';
-    
+
     DateTime mealDate;
     final regExp = RegExp(r'^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$');
     if (regExp.hasMatch(timestamp)) {
@@ -69,12 +69,16 @@ class _HistoryTabState extends State<HistoryTab> {
     } else {
       return true;
     }
-    
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final diffDays = today.difference(DateTime(mealDate.year, mealDate.month, mealDate.day)).inDays;
-    
-    if (range == 'Hari Ini') {
+    final diffDays = today
+        .difference(DateTime(mealDate.year, mealDate.month, mealDate.day))
+        .inDays;
+
+    if (range == 'Semua') {
+      return true;
+    } else if (range == 'Hari Ini') {
       return diffDays == 0;
     } else if (range == 'Minggu Ini') {
       return diffDays >= 0 && diffDays < 7;
@@ -86,12 +90,12 @@ class _HistoryTabState extends State<HistoryTab> {
 
   void _applyFilters() {
     List<dynamic> filtered = List.from(_allMeals);
-    
+
     filtered = filtered.where((m) {
       final mealMap = m as Map<String, dynamic>;
       return _isMealInSelectedRange(mealMap, _selectedRange);
     }).toList();
-    
+
     if (_selectedSort == 'Terbaru') {
       filtered.sort((a, b) => (b['id'] ?? 0).compareTo(a['id'] ?? 0));
     } else {
@@ -116,7 +120,9 @@ class _HistoryTabState extends State<HistoryTab> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text(
             'Hapus Catatan',
             style: TextStyle(
@@ -157,7 +163,9 @@ class _HistoryTabState extends State<HistoryTab> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(res['message'] ?? 'Gagal menghapus makanan'),
+                        content: Text(
+                          res['message'] ?? 'Gagal menghapus makanan',
+                        ),
                         backgroundColor: Colors.redAccent,
                       ),
                     );
@@ -168,7 +176,9 @@ class _HistoryTabState extends State<HistoryTab> {
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text(
                 'Hapus',
@@ -199,7 +209,10 @@ class _HistoryTabState extends State<HistoryTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: PopupMenuButton<String>(
                   onSelected: (String result) {
                     setState(() {
@@ -207,16 +220,21 @@ class _HistoryTabState extends State<HistoryTab> {
                       _applyFilters();
                     });
                   },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(
-                      value: 'Minggu Ini',
-                      child: Text('Minggu Ini'),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'Bulan Ini',
-                      child: Text('Bulan Ini'),
-                    ),
-                  ],
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'Semua',
+                          child: Text('Semua'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'Minggu Ini',
+                          child: Text('Minggu Ini'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'Bulan Ini',
+                          child: Text('Bulan Ini'),
+                        ),
+                      ],
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
@@ -227,7 +245,11 @@ class _HistoryTabState extends State<HistoryTab> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today_rounded, size: 16, color: Colors.grey),
+                        const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -254,7 +276,9 @@ class _HistoryTabState extends State<HistoryTab> {
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
                 )
               else ...[
@@ -268,7 +292,8 @@ class _HistoryTabState extends State<HistoryTab> {
                     title: 'Total Kalori $_selectedRange',
                     value: _totalCalories.toStringAsFixed(0),
                     unit: 'kkal',
-                    targetDesc: '${(calProgress * 100).toStringAsFixed(0)}% dari target 2.000 kkal',
+                    targetDesc:
+                        '${(calProgress * 100).toStringAsFixed(0)}% dari target 2.000 kkal',
                     progress: calProgress,
                     progressColor: AppTheme.primaryColor,
                   ),
@@ -284,7 +309,8 @@ class _HistoryTabState extends State<HistoryTab> {
                     title: 'Total Protein $_selectedRange',
                     value: _totalProtein.toStringAsFixed(0),
                     unit: 'g',
-                    targetDesc: '${(protProgress * 100).toStringAsFixed(0)}% dari target 80 g',
+                    targetDesc:
+                        '${(protProgress * 100).toStringAsFixed(0)}% dari target 80 g',
                     progress: protProgress,
                     progressColor: const Color(0xFF2F80ED),
                   ),
@@ -310,18 +336,22 @@ class _HistoryTabState extends State<HistoryTab> {
                             _applyFilters();
                           });
                         },
-                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                          const PopupMenuItem<String>(
-                            value: 'Terbaru',
-                            child: Text('Terbaru'),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: 'Terlama',
-                            child: Text('Terlama'),
-                          ),
-                        ],
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'Terbaru',
+                                child: Text('Terbaru'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'Terlama',
+                                child: Text('Terlama'),
+                              ),
+                            ],
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
@@ -365,7 +395,11 @@ class _HistoryTabState extends State<HistoryTab> {
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.restaurant_menu_rounded, color: Colors.grey.shade300, size: 48),
+                              Icon(
+                                Icons.restaurant_menu_rounded,
+                                color: Colors.grey.shade300,
+                                size: 48,
+                              ),
                               const SizedBox(height: 12),
                               Text(
                                 'Jurnal makanan Anda masih kosong',
@@ -382,20 +416,28 @@ class _HistoryTabState extends State<HistoryTab> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _meals.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 16),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
                           itemBuilder: (context, index) {
                             final meal = _meals[index];
                             final mealId = meal['id'] as int;
                             final foodName = meal['food_name'] ?? 'Makanan';
-                            final calories = meal['calories']?.toStringAsFixed(0) ?? '0';
-                            final protein = meal['protein']?.toStringAsFixed(0) ?? '0';
-                            final carbs = meal['carbs']?.toStringAsFixed(0) ?? '0';
+                            final calories =
+                                meal['calories']?.toStringAsFixed(0) ?? '0';
+                            final protein =
+                                meal['protein']?.toStringAsFixed(0) ?? '0';
+                            final carbs =
+                                meal['carbs']?.toStringAsFixed(0) ?? '0';
                             final fat = meal['fat']?.toStringAsFixed(0) ?? '0';
-                            final rawTimestamp = meal['timestamp'] ?? 'Hari Ini';
-                            final timestamp = formatFriendlyTimestamp(rawTimestamp);
+                            final rawTimestamp =
+                                meal['timestamp'] ?? 'Hari Ini';
+                            final timestamp = formatFriendlyTimestamp(
+                              rawTimestamp,
+                            );
                             final components = meal['components'] ?? '';
                             final isManual = meal['is_manual'] ?? false;
-                            final imagePath = meal['image_path'] ?? 'assets/image3.png';
+                            final imagePath =
+                                meal['image_path'] ?? 'assets/image3.png';
 
                             int componentCount = components.split(',').length;
 
@@ -417,7 +459,9 @@ class _HistoryTabState extends State<HistoryTab> {
                                     imagePath: imagePath,
                                     name: foodName,
                                     time: timestamp,
-                                    badgeText: isManual ? 'Input Manual' : '$componentCount komponen terdeteksi',
+                                    badgeText: isManual
+                                        ? 'Input Manual'
+                                        : '$componentCount komponen terdeteksi',
                                     isManual: isManual,
                                     calories: calories,
                                     protein: protein,
@@ -432,7 +476,9 @@ class _HistoryTabState extends State<HistoryTab> {
                                       child: Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: Colors.redAccent.withOpacity(0.08),
+                                          color: Colors.redAccent.withOpacity(
+                                            0.08,
+                                          ),
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(

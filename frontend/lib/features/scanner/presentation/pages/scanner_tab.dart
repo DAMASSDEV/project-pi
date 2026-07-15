@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
+import '../../../../core/widgets/meal_image.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ScannerTab extends StatefulWidget {
@@ -56,7 +57,8 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    if (_cameraController == null || !_cameraController!.value.isInitialized)
+      return;
     if (state == AppLifecycleState.inactive) {
       _cameraController?.dispose();
     } else if (state == AppLifecycleState.resumed) {
@@ -114,14 +116,18 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       try {
         final double maxZoom = await _cameraController!.getMaxZoomLevel();
         final double minZoom = await _cameraController!.getMinZoomLevel();
-        final double targetZoom = (_zoomLevels[index]['value'] as double).clamp(minZoom, maxZoom);
+        final double targetZoom = (_zoomLevels[index]['value'] as double).clamp(
+          minZoom,
+          maxZoom,
+        );
         await _cameraController!.setZoomLevel(targetZoom);
       } catch (_) {}
     }
   }
 
   Future<void> _toggleFlash() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    if (_cameraController == null || !_cameraController!.value.isInitialized)
+      return;
 
     setState(() {
       _isFlashOn = !_isFlashOn;
@@ -142,84 +148,84 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 48,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Cara Foto Makanan agar AI Akurat',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.neutralColor,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Patuhi petunjuk di bawah ini agar pemindaian nutrisi makanan Anda tepat.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade500,
-                ),
-              ),
-              const SizedBox(height: 24),
-              _buildInstructionItem(
-                Icons.wb_sunny_rounded,
-                Colors.amber,
-                'Pencahayaan yang Cukup',
-                'Pastikan makanan diterangi cahaya terang.',
-              ),
-              const SizedBox(height: 16),
-              _buildInstructionItem(
-                Icons.center_focus_strong_rounded,
-                AppTheme.primaryColor,
-                'Fokus pada Satu Piring',
-                'Posisikan makanan tepat di tengah frame.',
-              ),
-              const SizedBox(height: 16),
-              _buildInstructionItem(
-                Icons.photo_camera_back_rounded,
-                Colors.blue,
-                'Sudut Foto 45 Derajat',
-                'Ambil foto dari kemiringan 45 derajat atau tegak lurus dari atas.',
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Saya Mengerti',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+        return SafeArea(
+          top: false,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                const Text(
+                  'Cara Foto Makanan agar AI Akurat',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.neutralColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Patuhi petunjuk di bawah ini agar pemindaian nutrisi makanan Anda tepat.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                ),
+                const SizedBox(height: 24),
+                _buildInstructionItem(
+                  Icons.wb_sunny_rounded,
+                  Colors.amber,
+                  'Pencahayaan yang Cukup',
+                  'Pastikan makanan diterangi cahaya terang.',
+                ),
+                const SizedBox(height: 16),
+                _buildInstructionItem(
+                  Icons.center_focus_strong_rounded,
+                  AppTheme.primaryColor,
+                  'Fokus pada Satu Piring',
+                  'Posisikan makanan tepat di tengah frame.',
+                ),
+                const SizedBox(height: 16),
+                _buildInstructionItem(
+                  Icons.photo_camera_back_rounded,
+                  Colors.blue,
+                  'Sudut Foto 45 Derajat',
+                  'Ambil foto dari kemiringan 45 derajat atau tegak lurus dari atas.',
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Saya Mengerti',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -320,10 +326,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                   const SizedBox(height: 6),
                   Text(
                     'Pilih makanan yang terdeteksi di kamera atau ketikkan namanya secara manual.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -339,42 +342,49 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: [
-                      'Soto Kuning Bogor',
-                      'Asinan Bogor',
-                      'Nasi Goreng Spesial',
-                      'Chicken Salad Bowl',
-                    ].map((food) {
-                      final isSel = selectedPreset == food;
-                      return ChoiceChip(
-                        label: Text(food),
-                        selected: isSel,
-                        selectedColor: const Color(0xFFF0FAF7),
-                        backgroundColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: isSel ? AppTheme.primaryColor : Colors.grey.shade700,
-                          fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(
-                            color: isSel ? AppTheme.primaryColor : Colors.grey.shade300,
-                          ),
-                        ),
-                        showCheckmark: false,
-                        onSelected: (selected) {
-                          setSheetState(() {
-                            if (selected) {
-                              selectedPreset = food;
-                              textController.clear();
-                            } else {
-                              selectedPreset = null;
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
+                    children:
+                        [
+                          'Soto Kuning Bogor',
+                          'Asinan Bogor',
+                          'Nasi Goreng Spesial',
+                          'Chicken Salad Bowl',
+                        ].map((food) {
+                          final isSel = selectedPreset == food;
+                          return ChoiceChip(
+                            label: Text(food),
+                            selected: isSel,
+                            selectedColor: const Color(0xFFF0FAF7),
+                            backgroundColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: isSel
+                                  ? AppTheme.primaryColor
+                                  : Colors.grey.shade700,
+                              fontWeight: isSel
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: isSel
+                                    ? AppTheme.primaryColor
+                                    : Colors.grey.shade300,
+                              ),
+                            ),
+                            showCheckmark: false,
+                            onSelected: (selected) {
+                              setSheetState(() {
+                                if (selected) {
+                                  selectedPreset = food;
+                                  textController.clear();
+                                } else {
+                                  selectedPreset = null;
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -391,14 +401,20 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                     controller: textController,
                     decoration: InputDecoration(
                       hintText: 'Contoh: Sate Ayam, Gado-gado, dll.',
-                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 13,
+                      ),
                       fillColor: const Color(0xFFF8F9FA),
                       filled: true,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                     onChanged: (val) {
                       if (val.trim().isNotEmpty && selectedPreset != null) {
@@ -414,11 +430,14 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: () {
-                        final String foodName = selectedPreset ?? textController.text.trim();
+                        final String foodName =
+                            selectedPreset ?? textController.text.trim();
                         if (foodName.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Silakan pilih atau ketik nama makanan.'),
+                              content: Text(
+                                'Silakan pilih atau ketik nama makanan.',
+                              ),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
@@ -463,7 +482,8 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       }
       _startAnalysisFlow(foodName: foodName);
     } else {
-      if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+      if (_cameraController == null || !_cameraController!.value.isInitialized)
+        return;
       try {
         final file = await _cameraController!.takePicture();
         _startAnalysisFlow(filePath: file.path);
@@ -503,7 +523,9 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
     });
 
     try {
-      if (_isFlashOn && _cameraController != null && _cameraController!.value.isInitialized) {
+      if (_isFlashOn &&
+          _cameraController != null &&
+          _cameraController!.value.isInitialized) {
         await _cameraController!.setFlashMode(FlashMode.off);
       }
 
@@ -527,7 +549,10 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       if (result['success'] == true) {
         final isBogorFood = result['is_bogor_food'] ?? true;
         if (isBogorFood == false) {
-          _showNotBogorAlert(result['alert_message'] ?? 'Makanan tidak terdeteksi sebagai makanan khas Bogor.');
+          _showNotBogorAlert(
+            result['alert_message'] ??
+                'Makanan tidak terdeteksi sebagai makanan khas Bogor.',
+          );
         } else {
           _showResultSheet(result);
         }
@@ -558,10 +583,16 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: Colors.orange.shade700, size: 28),
+              Icon(
+                Icons.info_outline_rounded,
+                color: Colors.orange.shade700,
+                size: 28,
+              ),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
@@ -571,35 +602,13 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                message,
-                style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.lightbulb_outline_rounded, color: AppTheme.primaryColor, size: 20),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Anda dapat memasukkan nama bahan makanan secara manual untuk melihat kandungan gizinya.',
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: Colors.black87,
+            ),
           ),
           actions: [
             TextButton(
@@ -609,129 +618,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                 style: TextStyle(color: Colors.grey.shade600),
               ),
             ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _showManualIngredientSearch();
-              },
-              icon: const Icon(Icons.search_rounded, size: 18),
-              label: const Text('Cari Bahan Makanan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
           ],
-        );
-      },
-    );
-  }
-
-  void _showManualIngredientSearch() {
-    final textController = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Cari Bahan Makanan',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A2E),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Masukkan nama bahan atau makanan untuk melihat kandungan gizinya dari database kami (2000+ bahan makanan).',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: textController,
-                autofocus: true,
-                textCapitalization: TextCapitalization.words,
-                decoration: InputDecoration(
-                  hintText: 'Contoh: nasi putih, ayam goreng, tempe...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                  prefixIcon: Icon(Icons.search_rounded, color: AppTheme.primaryColor),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final name = textController.text.trim();
-                    if (name.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Silakan masukkan nama bahan makanan.'),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
-                      return;
-                    }
-                    Navigator.pop(ctx);
-                    _startAnalysisFlow(foodName: name);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text(
-                    'Analisis Gizi',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
         );
       },
     );
@@ -772,276 +659,314 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
           minChildSize: 0.6,
           expand: false,
           builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 48,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              foodName,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.neutralColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Hasil Analisis AI Nutrify',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            return SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 5,
                         decoration: BoxDecoration(
-                          color: gradeColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Skor: ',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: gradeColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              grade,
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: gradeColor,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey.shade100),
                     ),
-                    child: Row(
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: Image.asset(
-                            imgPath,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Estimasi Kalori Porsi',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
+                              Text(
+                                foodName,
+                                style: const TextStyle(
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
+                                  color: AppTheme.neutralColor,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text(
-                                    calories.toStringAsFixed(0),
-                                    style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppTheme.neutralColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    'kkal',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                'Hasil Analisis AI Nutrify',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: gradeColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Skor: ',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: gradeColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                grade,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: gradeColor,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Kandungan Makronutrisi',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.neutralColor,
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey.shade100),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: MealImage(
+                              imagePath: imgPath,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Estimasi Kalori Porsi',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(
+                                      calories.toStringAsFixed(0),
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.neutralColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'kkal',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMacroProgress('Karbohidrat', carbs, 'g', Colors.orange, 100),
-                  const SizedBox(height: 12),
-                  _buildMacroProgress('Protein', protein, 'g', AppTheme.primaryColor, 80),
-                  const SizedBox(height: 12),
-                  _buildMacroProgress('Lemak', fat, 'g', Colors.redAccent, 60),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Komponen Terdeteksi',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.neutralColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    components,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade700,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Catatan Ahli Gizi AI',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.neutralColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
-                    ),
-                    child: Text(
-                      description,
-                      style: const TextStyle(
-                        fontSize: 12.5,
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Kandungan Makronutrisi',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                         color: AppTheme.neutralColor,
-                        height: 1.5,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final navigator = Navigator.of(context);
-                        final messenger = ScaffoldMessenger.of(context);
-                        final now = DateTime.now();
-                        final timeString = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
-                        final timestamp = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} $timeString";
+                    const SizedBox(height: 16),
+                    _buildMacroProgress(
+                      'Karbohidrat',
+                      carbs,
+                      'g',
+                      Colors.orange,
+                      100,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMacroProgress(
+                      'Protein',
+                      protein,
+                      'g',
+                      AppTheme.primaryColor,
+                      80,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMacroProgress(
+                      'Lemak',
+                      fat,
+                      'g',
+                      Colors.redAccent,
+                      60,
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Komponen Terdeteksi',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neutralColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      components,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Catatan Ahli Gizi AI',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neutralColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Text(
+                        description,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          color: AppTheme.neutralColor,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final navigator = Navigator.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
+                          final now = DateTime.now();
+                          final timeString =
+                              "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+                          final timestamp =
+                              "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} $timeString";
 
-                        final prefs = await SharedPreferences.getInstance();
-                        final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
+                          final prefs = await SharedPreferences.getInstance();
+                          final email =
+                              prefs.getString('logged_in_email') ??
+                              'guest@nutrify.com';
 
-                        final mealData = {
-                          'email': email,
-                          'food_name': foodName,
-                          'calories': calories,
-                          'protein': protein,
-                          'carbs': carbs,
-                          'fat': fat,
-                          'health_score': score,
-                          'components': components,
-                          'timestamp': timestamp,
-                          'image_path': imgPath,
-                          'is_manual': false,
-                        };
+                          final mealData = {
+                            'email': email,
+                            'food_name': foodName,
+                            'calories': calories,
+                            'protein': protein,
+                            'carbs': carbs,
+                            'fat': fat,
+                            'health_score': score,
+                            'components': components,
+                            'timestamp': timestamp,
+                            'image_path': imgPath,
+                            'is_manual': false,
+                          };
 
-                        final res = await _apiService.saveMeal(mealData);
-                        if (!mounted) return;
+                          final res = await _apiService.saveMeal(mealData);
+                          if (!mounted) return;
 
-                        if (res['success'] == true) {
-                          navigator.pop();
-                          messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text('Makanan berhasil disimpan ke jurnal harian.'),
-                              backgroundColor: AppTheme.primaryColor,
-                            ),
-                          );
-                          if (widget.onScanSaved != null) {
-                            widget.onScanSaved!();
+                          if (res['success'] == true) {
+                            navigator.pop();
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Makanan berhasil disimpan ke jurnal harian.',
+                                ),
+                                backgroundColor: AppTheme.primaryColor,
+                              ),
+                            );
+                            if (widget.onScanSaved != null) {
+                              widget.onScanSaved!();
+                            }
+                          } else {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  res['message'] ?? 'Gagal menyimpan makanan',
+                                ),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
                           }
-                        } else {
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(res['message'] ?? 'Gagal menyimpan makanan'),
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Simpan ke Jurnal Makanan',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
+                        child: const Text(
+                          'Simpan ke Jurnal Makanan',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             );
           },
@@ -1050,7 +975,13 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildMacroProgress(String label, double val, String unit, Color color, double maxVal) {
+  Widget _buildMacroProgress(
+    String label,
+    double val,
+    String unit,
+    Color color,
+    double maxVal,
+  ) {
     final double pct = (val / maxVal).clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1088,10 +1019,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                   flex: (pct * 100).toInt(),
                   child: Container(color: color),
                 ),
-                Expanded(
-                  flex: ((1 - pct) * 100).toInt(),
-                  child: Container(),
-                ),
+                Expanded(flex: ((1 - pct) * 100).toInt(), child: Container()),
               ],
             ),
           ),
@@ -1126,7 +1054,10 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                 right: 0,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(8),
@@ -1153,10 +1084,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       return Container(
         color: const Color(0xFF1A1A1A),
         child: const Center(
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2,
-          ),
+          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
         ),
       );
     }
@@ -1165,7 +1093,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
     final deviceRatio = size.width / size.height;
     final previewSize = _cameraController!.value.previewSize!;
     final previewRatio = previewSize.height / previewSize.width;
-    
+
     double scale = 1.0;
     if (deviceRatio > previewRatio) {
       scale = deviceRatio / previewRatio;
@@ -1175,9 +1103,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
 
     return Transform.scale(
       scale: scale,
-      child: Center(
-        child: CameraPreview(_cameraController!),
-      ),
+      child: Center(child: CameraPreview(_cameraController!)),
     );
   }
 
@@ -1201,10 +1127,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                 fit: StackFit.expand,
                 children: [
                   _buildCameraPreview(),
-                  if (_showGrid)
-                    CustomPaint(
-                      painter: CameraGridPainter(),
-                    ),
+                  if (_showGrid) CustomPaint(painter: CameraGridPainter()),
                   if (_isScanning)
                     Container(
                       color: Colors.black.withValues(alpha: 0.7),
@@ -1218,7 +1141,8 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                               child: CircularProgressIndicator(
                                 color: AppTheme.primaryColor,
                                 strokeWidth: 3,
-                                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+                                backgroundColor: AppTheme.primaryColor
+                                    .withValues(alpha: 0.15),
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -1262,7 +1186,9 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                     ),
                     const SizedBox(width: 12),
                     _buildTopControl(
-                      icon: _isFlashOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                      icon: _isFlashOn
+                          ? Icons.flash_on_rounded
+                          : Icons.flash_off_rounded,
                       isActive: _isFlashOn,
                       onTap: _toggleFlash,
                     ),
@@ -1271,7 +1197,9 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                 Row(
                   children: [
                     _buildTopControl(
-                      icon: _showGrid ? Icons.grid_on_rounded : Icons.grid_off_rounded,
+                      icon: _showGrid
+                          ? Icons.grid_on_rounded
+                          : Icons.grid_off_rounded,
                       isActive: _showGrid,
                       onTap: () {
                         setState(() {
@@ -1346,17 +1274,18 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                     height: 76,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 4,
-                      ),
+                      border: Border.all(color: Colors.white, width: 4),
                     ),
                     padding: const EdgeInsets.all(3),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       decoration: BoxDecoration(
-                        shape: _isScanning ? BoxShape.rectangle : BoxShape.circle,
-                        borderRadius: _isScanning ? BorderRadius.circular(8) : null,
+                        shape: _isScanning
+                            ? BoxShape.rectangle
+                            : BoxShape.circle,
+                        borderRadius: _isScanning
+                            ? BorderRadius.circular(8)
+                            : null,
                         color: _isScanning ? Colors.red : Colors.white,
                       ),
                       width: _isScanning ? 30 : double.infinity,
@@ -1368,7 +1297,8 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                 GestureDetector(
                   onTap: () {
                     if (_cameras.length > 1 && _cameraController != null) {
-                      final currentDir = _cameraController!.description.lensDirection;
+                      final currentDir =
+                          _cameraController!.description.lensDirection;
                       final newCamera = _cameras.firstWhere(
                         (cam) => cam.lensDirection != currentDir,
                         orElse: () => _cameras.first,
@@ -1434,11 +1364,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
             width: 1,
           ),
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 20,
-        ),
+        child: Icon(icon, color: Colors.white, size: 20),
       ),
     );
   }
@@ -1457,15 +1383,15 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
         margin: const EdgeInsets.symmetric(horizontal: 2),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isActive
-              ? AppTheme.primaryColor
-              : Colors.transparent,
+          color: isActive ? AppTheme.primaryColor : Colors.transparent,
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.65),
+              color: isActive
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.65),
               fontSize: isActive ? 12 : 11,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
             ),
@@ -1483,10 +1409,26 @@ class CameraGridPainter extends CustomPainter {
       ..color = Colors.white.withValues(alpha: 0.2)
       ..strokeWidth = 0.5;
 
-    canvas.drawLine(Offset(size.width / 3, 0), Offset(size.width / 3, size.height), paint);
-    canvas.drawLine(Offset(size.width * 2 / 3, 0), Offset(size.width * 2 / 3, size.height), paint);
-    canvas.drawLine(Offset(0, size.height / 3), Offset(size.width, size.height / 3), paint);
-    canvas.drawLine(Offset(0, size.height * 2 / 3), Offset(size.width, size.height * 2 / 3), paint);
+    canvas.drawLine(
+      Offset(size.width / 3, 0),
+      Offset(size.width / 3, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 2 / 3, 0),
+      Offset(size.width * 2 / 3, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height / 3),
+      Offset(size.width, size.height / 3),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height * 2 / 3),
+      Offset(size.width, size.height * 2 / 3),
+      paint,
+    );
 
     final cornerPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.6)

@@ -31,8 +31,10 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       'fat': 3.0,
       'fiber': 2.8,
       'sodium': 540.0,
-      'desc': 'Asinan buah dan sayur segar dengan kuah cuka merah asam pedas yang menggugah selera.',
-      'tip': 'Sangat sehat! Vitamin C tinggi dan kaya serat. Namun, kurangi asupan kerupuk mi kuning pelengkapnya jika ingin membatasi kalori kosong.',
+      'desc':
+          'Asinan buah dan sayur segar dengan kuah cuka merah asam pedas yang menggugah selera.',
+      'tip':
+          'Sangat sehat! Vitamin C tinggi dan kaya serat. Namun, kurangi asupan kerupuk mi kuning pelengkapnya jika ingin membatasi kalori kosong.',
       'image': 'assets/image2.png',
       'color': Color(0xFF108967),
     },
@@ -44,8 +46,10 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       'fat': 25.0,
       'fiber': 0.8,
       'sodium': 620.0,
-      'desc': 'Soto kuning bersantan khas Bogor yang kaya akan rempah, disajikan dengan irisan daging sapi.',
-      'tip': 'Tinggi protein hewani. Batasi konsumsi kuah santan berlebih untuk meminimalkan asupan lemak jenuh harian Anda.',
+      'desc':
+          'Soto kuning bersantan khas Bogor yang kaya akan rempah, disajikan dengan irisan daging sapi.',
+      'tip':
+          'Tinggi protein hewani. Batasi konsumsi kuah santan berlebih untuk meminimalkan asupan lemak jenuh harian Anda.',
       'image': 'assets/image3.png',
       'color': Color(0xFFFFA500),
     },
@@ -57,8 +61,10 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       'fat': 9.5,
       'fiber': 2.5,
       'sodium': 520.0,
-      'desc': 'Makanan tradisional dengan isian kupat, tahu kuning, kentang rebus, telur, dan siraman bumbu kacang tebal.',
-      'tip': 'Sumber energi karbohidrat dan protein nabati yang baik. Mintalah saus bumbu kacang dipisah agar Anda bisa mengontrol porsi kalori bumbunya.',
+      'desc':
+          'Makanan tradisional dengan isian kupat, tahu kuning, kentang rebus, telur, dan siraman bumbu kacang tebal.',
+      'tip':
+          'Sumber energi karbohidrat dan protein nabati yang baik. Mintalah saus bumbu kacang dipisah agar Anda bisa mengontrol porsi kalori bumbunya.',
       'image': 'assets/image1.png',
       'color': Color(0xFF0F766E),
     },
@@ -70,8 +76,10 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       'fat': 13.0,
       'fiber': 2.0,
       'sodium': 650.0,
-      'desc': 'Ketupat, bihun, tauge, kemangi, oncom merah, disiram kuah santan laksa kuning khas yang gurih.',
-      'tip': 'Oncom merah di dalamnya merupakan fermentasi bergizi tinggi protein. Disarankan konsumsi dengan tambahan protein seperti telur rebus.',
+      'desc':
+          'Ketupat, bihun, tauge, kemangi, oncom merah, disiram kuah santan laksa kuning khas yang gurih.',
+      'tip':
+          'Oncom merah di dalamnya merupakan fermentasi bergizi tinggi protein. Disarankan konsumsi dengan tambahan protein seperti telur rebus.',
       'image': 'assets/image2.png',
       'color': Color(0xFFE11D48),
     },
@@ -83,8 +91,10 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       'fat': 2.1,
       'fiber': 2.5,
       'sodium': 480.0,
-      'desc': 'Tauge segar, mi kuning, tahu kuning rebus yang disiram dengan saus tauco khas yang gurih manis.',
-      'tip': 'Relatif rendah kalori dan lemak karena tauge tidak digoreng dengan minyak (direbus di air wadah datar). Bagus untuk program diet kalori rendah.',
+      'desc':
+          'Tauge segar, mi kuning, tahu kuning rebus yang disiram dengan saus tauco khas yang gurih manis.',
+      'tip':
+          'Relatif rendah kalori dan lemak karena tauge tidak digoreng dengan minyak (direbus di air wadah datar). Bagus untuk program diet kalori rendah.',
       'image': 'assets/image1.png',
       'color': Color(0xFF2563EB),
     },
@@ -104,7 +114,7 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('logged_in_email') ?? '';
     final name = prefs.getString('logged_in_name') ?? 'Pengguna';
-    
+
     if (email.isNotEmpty) {
       final res = await _apiService.getPersonalization(email);
       if (res['success'] == true && res['data'] != null) {
@@ -123,7 +133,9 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
     setState(() {
       _userName = name;
       _goal = prefs.getString('user_goal') ?? 'Menjaga Berat Badan';
-      _conditions = List<String>.from(prefs.getStringList('user_conditions') ?? []);
+      _conditions = List<String>.from(
+        prefs.getStringList('user_conditions') ?? [],
+      );
       _setTargetValues({
         'goal': _goal,
         'weight': prefs.getDouble('user_weight') ?? 70.0,
@@ -138,11 +150,15 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
 
   void _setTargetValues(Map<String, dynamic> data) {
     final String goal = data['goal'] ?? 'Menjaga Berat Badan';
-    final double weight = double.tryParse(data['weight']?.toString() ?? '') ?? 70.0;
-    final double height = double.tryParse(data['height']?.toString() ?? '') ?? 170.0;
+    final double weight =
+        double.tryParse(data['weight']?.toString() ?? '') ?? 70.0;
+    final double height =
+        double.tryParse(data['height']?.toString() ?? '') ?? 170.0;
     final String gender = (data['gender'] ?? 'Laki-laki').toString();
-    final String activity = (data['activity'] ?? 'Jarang').toString().toLowerCase();
-    
+    final String activity = (data['activity'] ?? 'Jarang')
+        .toString()
+        .toLowerCase();
+
     int age = 25;
     if (data['dob'] != null && data['dob'].toString().isNotEmpty) {
       try {
@@ -152,7 +168,9 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
     }
 
     double bmr = 0;
-    if (gender == 'Perempuan' || gender.toLowerCase().contains('wanita') || gender.toLowerCase().contains('female')) {
+    if (gender == 'Perempuan' ||
+        gender.toLowerCase().contains('wanita') ||
+        gender.toLowerCase().contains('female')) {
       bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
     } else {
       bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
@@ -161,7 +179,9 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
     double multiplier = 1.2;
     if (activity.contains('sangat aktif') || activity.contains('6-7')) {
       multiplier = 1.725;
-    } else if (activity.contains('cukup aktif') || activity.contains('3-5') || activity.contains('sedang')) {
+    } else if (activity.contains('cukup aktif') ||
+        activity.contains('3-5') ||
+        activity.contains('sedang')) {
       multiplier = 1.55;
     } else if (activity.contains('jarang') || activity.contains('1-3')) {
       multiplier = 1.375;
@@ -215,28 +235,28 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
         'Fokus pada makanan padat nutrisi yang rendah kalori tetapi tinggi serat.',
         'Pilih camilan segar seperti buah potong atau Asinan Bogor tanpa kerupuk berlebih.',
         'Usahakan minum air mineral minimal 8-10 gelas sehari untuk membantu rasa kenyang.',
-        'Batasi penggunaan saus manis, santan, and gorengan bertepung tinggi minyak.'
+        'Batasi penggunaan saus manis, santan, and gorengan bertepung tinggi minyak.',
       ];
     } else if (_goal == 'Menaikkan Berat Badan') {
       return [
         'Konsumsilah makanan dengan kepadatan kalori sehat seperti kacang-kacangan, alpukat, dan keju.',
         'Doclang dan Soto Kuning Bogor adalah pilihan bagus untuk asupan energi padat.',
         'Makan lebih sering dengan porsi sedang (misal 5-6 kali sehari termasuk camilan).',
-        'Sertakan minuman berkalori sehat seperti jus buah murni, susu, atau yogurt plain.'
+        'Sertakan minuman berkalori sehat seperti jus buah murni, susu, atau yogurt plain.',
       ];
     } else if (_goal == 'Meningkatkan Massa Otot') {
       return [
         'Prioritaskan asupan protein berkualitas tinggi seperti daging tanpa lemak, telur, tahu, dan tempe.',
         'Cungkring dan Soto Kuning merupakan sumber protein hewani khas yang kaya gizi.',
         'Konsumsi protein sekitar 20-30 gram dalam setiap sesi makan utama Anda.',
-        'Cukupi kebutuhan karbohidrat kompleks sebelum dan sesudah latihan untuk energi optimal.'
+        'Cukupi kebutuhan karbohidrat kompleks sebelum dan sesudah latihan untuk energi optimal.',
       ];
     } else {
       return [
         'Konsumsi makanan bergizi seimbang dengan porsi piring makan sehat.',
         'Lakukan pemantauan kalori harian agar stabil mendekati target 2000 kkal.',
         'Variasikan asupan buah-buahan, sayuran hijau, karbohidrat kompleks, and protein nabati.',
-        'Perhatikan kandungan natrium (garam) agar tidak melebihi 2000 mg per hari.'
+        'Perhatikan kandungan natrium (garam) agar tidak melebihi 2000 mg per hari.',
       ];
     }
   }
@@ -250,19 +270,34 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
 
     for (var condition in _conditions) {
       if (condition == 'Diabetes' && carbs > 15.0) {
-        healthWarnings.add('Perhatian untuk penderita Diabetes: Makanan ini memiliki kadar karbohidrat/gula yang cukup tinggi ($carbs g per 100g). Batasi porsi konsumsi.');
+        healthWarnings.add(
+          'Perhatian untuk penderita Diabetes: Makanan ini memiliki kadar karbohidrat/gula yang cukup tinggi ($carbs g per 100g). Batasi porsi konsumsi.',
+        );
       }
       if (condition == 'Hipertensi' && sodium > 150.0) {
-        healthWarnings.add('Perhatian untuk penderita Hipertensi: Kandungan natrium/garam makanan ini cukup tinggi ($sodium mg). Harap batasi penggunaan kuah/saus asin.');
+        healthWarnings.add(
+          'Perhatian untuk penderita Hipertensi: Kandungan natrium/garam makanan ini cukup tinggi ($sodium mg). Harap batasi penggunaan kuah/saus asin.',
+        );
       }
-      if (condition == 'Kolesterol Tinggi' && (fat > 10.0 || foodName.contains('soto') || foodName.contains('cungkring'))) {
-        healthWarnings.add('Perhatian untuk penderita Kolesterol Tinggi: Hindari mengonsumsi bagian jeroan atau kuah santan berlebih pada hidangan ini.');
+      if (condition == 'Kolesterol Tinggi' &&
+          (fat > 10.0 ||
+              foodName.contains('soto') ||
+              foodName.contains('cungkring'))) {
+        healthWarnings.add(
+          'Perhatian untuk penderita Kolesterol Tinggi: Hindari mengonsumsi bagian jeroan atau kuah santan berlebih pada hidangan ini.',
+        );
       }
-      if (condition == 'Asam Urat' && (foodName.contains('cungkring') || foodName.contains('soto'))) {
-        healthWarnings.add('Perhatian untuk penderita Asam Urat: Hidangan ini mengandung jeroan/kaki sapi yang tinggi purin. Batasi atau hindari untuk mencegah kekambuhan.');
+      if (condition == 'Asam Urat' &&
+          (foodName.contains('cungkring') || foodName.contains('soto'))) {
+        healthWarnings.add(
+          'Perhatian untuk penderita Asam Urat: Hidangan ini mengandung jeroan/kaki sapi yang tinggi purin. Batasi atau hindari untuk mencegah kekambuhan.',
+        );
       }
-      if (condition == 'Maag / GERD' && (foodName.contains('asinan') || foodName.contains('pedas'))) {
-        healthWarnings.add('Perhatian untuk penderita Maag / GERD: Makanan ini cenderung asam dan pedas, yang dapat memicu kenaikan asam lambung Anda.');
+      if (condition == 'Maag / GERD' &&
+          (foodName.contains('asinan') || foodName.contains('pedas'))) {
+        healthWarnings.add(
+          'Perhatian untuk penderita Maag / GERD: Makanan ini cenderung asam dan pedas, yang dapat memicu kenaikan asam lambung Anda.',
+        );
       }
     }
 
@@ -280,114 +315,213 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
           maxChildSize: 0.9,
           expand: false,
           builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 48,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(10),
+            return SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: (food['color'] as Color).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
+                    const SizedBox(height: 24),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: (food['color'] as Color).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.restaurant_menu_rounded,
+                            color: food['color'] as Color,
+                            size: 32,
+                          ),
                         ),
-                        child: Icon(
-                          Icons.restaurant_menu_rounded,
-                          color: food['color'] as Color,
-                          size: 32,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                food['name'] as String,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.neutralColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Takaran saji standar: 100 gram',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade500,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      food['desc'] as String,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade700,
+                        height: 1.5,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Kandungan Nutrisi (Per 100g)',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neutralColor,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildNutritionFactItem(
+                          'Energi',
+                          '${food['calories']} kkal',
+                          Colors.amber,
+                        ),
+                        _buildNutritionFactItem(
+                          'Protein',
+                          '${food['protein']} g',
+                          Colors.blue,
+                        ),
+                        _buildNutritionFactItem(
+                          'Karbo',
+                          '${food['carbs']} g',
+                          Colors.green,
+                        ),
+                        _buildNutritionFactItem(
+                          'Lemak',
+                          '${food['fat']} g',
+                          Colors.red,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildNutritionFactItem(
+                          'Serat',
+                          '${food['fiber']} g',
+                          Colors.teal,
+                        ),
+                        _buildNutritionFactItem(
+                          'Natrium',
+                          '${food['sodium']} mg',
+                          Colors.orange,
+                        ),
+                        const SizedBox(width: 72),
+                        const SizedBox(width: 72),
+                      ],
+                    ),
+                    if (healthWarnings.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.red.shade200,
+                            width: 1,
+                          ),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              food['name'] as String,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.neutralColor,
-                              ),
+                            Row(
+                              children: const [
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.redAccent,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Catatan Kesehatan Khusus',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Takaran saji standar: 100 gram',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade500,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            const SizedBox(height: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: healthWarnings.map((warn) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        '• ',
+                                        style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          warn,
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            color: Colors.red.shade900,
+                                            height: 1.4,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    food['desc'] as String,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade700,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Kandungan Nutrisi (Per 100g)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.neutralColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildNutritionFactItem('Energi', '${food['calories']} kkal', Colors.amber),
-                      _buildNutritionFactItem('Protein', '${food['protein']} g', Colors.blue),
-                      _buildNutritionFactItem('Karbo', '${food['carbs']} g', Colors.green),
-                      _buildNutritionFactItem('Lemak', '${food['fat']} g', Colors.red),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildNutritionFactItem('Serat', '${food['fiber']} g', Colors.teal),
-                      _buildNutritionFactItem('Natrium', '${food['sodium']} mg', Colors.orange),
-                      const SizedBox(width: 72),
-                      const SizedBox(width: 72),
-                    ],
-                  ),
-                  if (healthWarnings.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF1F2),
+                        color: const Color(0xFFF0FAF7),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.red.shade200,
+                          color: AppTheme.primaryColor.withOpacity(0.15),
                           width: 1,
                         ),
                       ),
@@ -397,99 +531,37 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
                           Row(
                             children: const [
                               Icon(
-                                Icons.warning_amber_rounded,
-                                color: Colors.redAccent,
+                                Icons.lightbulb_outline_rounded,
+                                color: AppTheme.primaryColor,
                                 size: 20,
                               ),
                               SizedBox(width: 8),
                               Text(
-                                'Catatan Kesehatan Khusus',
+                                'Saran Penyajian Sehat',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.redAccent,
+                                  color: AppTheme.primaryColor,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: healthWarnings.map((warn) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('• ', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                                    Expanded(
-                                      child: Text(
-                                        warn,
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          color: Colors.red.shade900,
-                                          height: 1.4,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
+                          Text(
+                            food['tip'] as String,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF0F766E),
+                              height: 1.5,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 24),
                   ],
-                  const SizedBox(height: 24),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0FAF7),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppTheme.primaryColor.withOpacity(0.15),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: const [
-                            Icon(
-                              Icons.lightbulb_outline_rounded,
-                              color: AppTheme.primaryColor,
-                              size: 20,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Saran Penyajian Sehat',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          food['tip'] as String,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF0F766E),
-                            height: 1.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
             );
           },
@@ -505,10 +577,7 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       decoration: BoxDecoration(
         color: color.withOpacity(0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.15),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.15), width: 1),
       ),
       child: Column(
         children: [
@@ -538,16 +607,30 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: AppTheme.primaryColor,
-        ),
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
       );
     }
 
-    final calculatedCalories = ((_selectedCalculatorFood?['calories'] as double) * _calculatorPortionGrams / 100.0).toStringAsFixed(1);
-    final calculatedProtein = ((_selectedCalculatorFood?['protein'] as double) * _calculatorPortionGrams / 100.0).toStringAsFixed(1);
-    final calculatedCarbs = ((_selectedCalculatorFood?['carbs'] as double) * _calculatorPortionGrams / 100.0).toStringAsFixed(1);
-    final calculatedFat = ((_selectedCalculatorFood?['fat'] as double) * _calculatorPortionGrams / 100.0).toStringAsFixed(1);
+    final calculatedCalories =
+        ((_selectedCalculatorFood?['calories'] as double) *
+                _calculatorPortionGrams /
+                100.0)
+            .toStringAsFixed(1);
+    final calculatedProtein =
+        ((_selectedCalculatorFood?['protein'] as double) *
+                _calculatorPortionGrams /
+                100.0)
+            .toStringAsFixed(1);
+    final calculatedCarbs =
+        ((_selectedCalculatorFood?['carbs'] as double) *
+                _calculatorPortionGrams /
+                100.0)
+            .toStringAsFixed(1);
+    final calculatedFat =
+        ((_selectedCalculatorFood?['fat'] as double) *
+                _calculatorPortionGrams /
+                100.0)
+            .toStringAsFixed(1);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -609,9 +692,21 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildTargetMetric('Kalori', '${_targetCalories.toInt()}', 'kkal'),
-                      _buildTargetMetric('Karbo', '${_targetCarbs.toInt()}', 'g'),
-                      _buildTargetMetric('Protein', '${_targetProtein.toInt()}', 'g'),
+                      _buildTargetMetric(
+                        'Kalori',
+                        '${_targetCalories.toInt()}',
+                        'kkal',
+                      ),
+                      _buildTargetMetric(
+                        'Karbo',
+                        '${_targetCarbs.toInt()}',
+                        'g',
+                      ),
+                      _buildTargetMetric(
+                        'Protein',
+                        '${_targetProtein.toInt()}',
+                        'g',
+                      ),
                       _buildTargetMetric('Lemak', '${_targetFat.toInt()}', 'g'),
                     ],
                   ),
@@ -630,10 +725,7 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
             const SizedBox(height: 6),
             Text(
               'Ketuk makanan untuk melihat detail kalori, nutrisi, dan tips sehatnya.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 16),
             SizedBox(

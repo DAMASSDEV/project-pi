@@ -23,14 +23,11 @@ class ApiService {
       } else {
         return {
           'success': false,
-          'message': 'Server returned status code ${response.statusCode}'
+          'message': 'Server returned status code ${response.statusCode}',
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to connect to backend: $e'
-      };
+      return {'success': false, 'message': 'Failed to connect to backend: $e'};
     }
   }
 
@@ -68,18 +65,22 @@ class ApiService {
           final message = errorData['detail'] ?? 'Sign in failed';
           return {'success': false, 'message': message};
         } catch (_) {
-          return {'success': false, 'message': 'Sign in failed with status ${response.statusCode}'};
+          return {
+            'success': false,
+            'message': 'Sign in failed with status ${response.statusCode}',
+          };
         }
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to connect to backend: $e'
-      };
+      return {'success': false, 'message': 'Failed to connect to backend: $e'};
     }
   }
 
-  Future<Map<String, dynamic>> signUp(String name, String email, String password) async {
+  Future<Map<String, dynamic>> signUp(
+    String name,
+    String email,
+    String password,
+  ) async {
     final url = Uri.parse('$baseUrl/api/auth/signup');
     try {
       final response = await _client.post(
@@ -96,23 +97,28 @@ class ApiService {
           final message = errorData['detail'] ?? 'Sign up failed';
           return {'success': false, 'message': message};
         } catch (_) {
-          return {'success': false, 'message': 'Sign up failed with status ${response.statusCode}'};
+          return {
+            'success': false,
+            'message': 'Sign up failed with status ${response.statusCode}',
+          };
         }
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to connect to backend: $e'
-      };
+      return {'success': false, 'message': 'Failed to connect to backend: $e'};
     }
   }
 
-  Future<Map<String, dynamic>> savePersonalization(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> savePersonalization(
+    Map<String, dynamic> data,
+  ) async {
     final url = Uri.parse('$baseUrl/api/personalization');
     try {
       final prefs = await SharedPreferences.getInstance();
       final emailKey = data['email'] ?? 'default_user';
-      await prefs.setString('cached_personalization_$emailKey', jsonEncode(data));
+      await prefs.setString(
+        'cached_personalization_$emailKey',
+        jsonEncode(data),
+      );
 
       final response = await _client.post(
         url,
@@ -125,17 +131,18 @@ class ApiService {
       } else {
         try {
           final errorData = jsonDecode(response.body);
-          final message = errorData['detail'] ?? 'Failed to save personalization';
+          final message =
+              errorData['detail'] ?? 'Failed to save personalization';
           return {'success': false, 'message': message};
         } catch (_) {
-          return {'success': false, 'message': 'Failed with status ${response.statusCode}'};
+          return {
+            'success': false,
+            'message': 'Failed with status ${response.statusCode}',
+          };
         }
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to connect to backend: $e'
-      };
+      return {'success': false, 'message': 'Failed to connect to backend: $e'};
     }
   }
 
@@ -146,10 +153,30 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
-        return {'status': 'unhealthy', 'error': 'Status code ${response.statusCode}'};
+        return {
+          'status': 'unhealthy',
+          'error': 'Status code ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'status': 'unhealthy', 'error': e.toString()};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> searchFoods(String query) async {
+    final url = Uri.parse(
+      '$baseUrl/api/foods/search?q=${Uri.encodeComponent(query)}',
+    );
+    try {
+      final response = await _client.get(url);
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final results = decoded['results'] as List<dynamic>? ?? [];
+        return results.map((e) => e as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
     }
   }
 
@@ -164,7 +191,10 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
-        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Status code ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -176,14 +206,17 @@ class ApiService {
     try {
       final request = http.MultipartRequest('POST', url);
       request.files.add(await http.MultipartFile.fromPath('file', filePath));
-      
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-      
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
-        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Status code ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -202,7 +235,10 @@ class ApiService {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
         return {'success': true, 'meal': decoded};
       } else {
-        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Status code ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -210,7 +246,9 @@ class ApiService {
   }
 
   Future<List<dynamic>> getMeals(String email) async {
-    final url = Uri.parse('$baseUrl/api/meals?email=${Uri.encodeComponent(email)}');
+    final url = Uri.parse(
+      '$baseUrl/api/meals?email=${Uri.encodeComponent(email)}',
+    );
     try {
       final response = await _client.get(url);
       if (response.statusCode == 200) {
@@ -230,14 +268,20 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
-        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Status code ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }
   }
 
-  Future<Map<String, dynamic>> updateMeal(int mealId, Map<String, dynamic> mealData) async {
+  Future<Map<String, dynamic>> updateMeal(
+    int mealId,
+    Map<String, dynamic> mealData,
+  ) async {
     final url = Uri.parse('$baseUrl/api/meals/$mealId');
     try {
       final response = await _client.put(
@@ -246,10 +290,12 @@ class ApiService {
         body: jsonEncode(mealData),
       );
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-        return {'success': true, 'meal': decoded};
+        return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
-        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Status code ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': e.toString()};
@@ -270,29 +316,35 @@ class ApiService {
       } else {
         try {
           final errorData = jsonDecode(response.body);
-          final message = errorData['detail'] ?? 'Gagal mengirim email pemulihan.';
+          final message =
+              errorData['detail'] ?? 'Gagal mengirim email pemulihan.';
           return {'success': false, 'message': message};
         } catch (_) {
-          return {'success': false, 'message': 'Gagal dengan status ${response.statusCode}'};
+          return {
+            'success': false,
+            'message': 'Gagal dengan status ${response.statusCode}',
+          };
         }
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Gagal terhubung ke server: $e'
-      };
+      return {'success': false, 'message': 'Gagal terhubung ke server: $e'};
     }
   }
 
   Future<Map<String, dynamic>> getPersonalization(String email) async {
-    final url = Uri.parse('$baseUrl/api/personalization/${Uri.encodeComponent(email)}');
+    final url = Uri.parse(
+      '$baseUrl/api/personalization/${Uri.encodeComponent(email)}',
+    );
     try {
       final response = await _client.get(url);
       if (response.statusCode == 200) {
         final res = jsonDecode(response.body) as Map<String, dynamic>;
         if (res['success'] == true && res['data'] != null) {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('cached_personalization_$email', jsonEncode(res['data']));
+          await prefs.setString(
+            'cached_personalization_$email',
+            jsonEncode(res['data']),
+          );
         }
         return res;
       } else {
@@ -304,7 +356,10 @@ class ApiService {
             'data': jsonDecode(cached) as Map<String, dynamic>,
           };
         }
-        return {'success': false, 'message': 'Status code ${response.statusCode}'};
+        return {
+          'success': false,
+          'message': 'Status code ${response.statusCode}',
+        };
       }
     } catch (e) {
       final prefs = await SharedPreferences.getInstance();
@@ -318,5 +373,4 @@ class ApiService {
       return {'success': false, 'message': e.toString()};
     }
   }
-
 }

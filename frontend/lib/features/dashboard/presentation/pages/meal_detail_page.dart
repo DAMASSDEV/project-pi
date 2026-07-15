@@ -1,20 +1,15 @@
-import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/date_helper.dart';
+import '../../../../core/widgets/meal_image.dart';
 
 class MealDetailPage extends StatefulWidget {
   final Map<String, dynamic> meal;
   final VoidCallback? onDeleteSuccess;
 
-  const MealDetailPage({
-    super.key,
-    required this.meal,
-    this.onDeleteSuccess,
-  });
+  const MealDetailPage({super.key, required this.meal, this.onDeleteSuccess});
 
   @override
   State<MealDetailPage> createState() => _MealDetailPageState();
@@ -22,7 +17,7 @@ class MealDetailPage extends StatefulWidget {
 
 class _MealDetailPageState extends State<MealDetailPage> {
   final ApiService _apiService = ApiService();
-  
+
   // Dynamic State variables loaded from the Postgres database entry
   late String _foodName;
   late double _calories;
@@ -30,37 +25,162 @@ class _MealDetailPageState extends State<MealDetailPage> {
   late double _carbs;
   late double _fat;
   late List<Map<String, dynamic>> _ingredientsList;
-  
+
   double _portion = 1.0;
   bool _isSaving = false;
   bool _isDeleting = false;
-  bool _isBookmarked = false;
 
   // Preset database of ingredient details for premium breakdown mapping
   final Map<String, Map<String, num>> _ingredientDatabase = {
-    'pita bread': {'calories': 318, 'weight': 120, 'protein': 8, 'carbs': 55, 'fat': 2},
-    'beef': {'calories': 426, 'weight': 150, 'protein': 38, 'carbs': 0, 'fat': 30},
-    'lettuce': {'calories': 6, 'weight': 30, 'protein': 0.5, 'carbs': 1, 'fat': 0.1},
-    'shredded carrots': {'calories': 11, 'weight': 25, 'protein': 0.3, 'carbs': 2.5, 'fat': 0.1},
-    'red cabbage': {'calories': 7, 'weight': 25, 'protein': 0.3, 'carbs': 1.8, 'fat': 0.1},
-    'corn': {'calories': 129, 'weight': 150, 'protein': 4, 'carbs': 28, 'fat': 1.5},
-    'asinan': {'calories': 180, 'weight': 200, 'protein': 3, 'carbs': 35, 'fat': 2},
-    'soto': {'calories': 250, 'weight': 250, 'protein': 18, 'carbs': 10, 'fat': 15},
-    'nasi goreng': {'calories': 450, 'weight': 300, 'protein': 14, 'carbs': 70, 'fat': 16},
-    'salad bowl': {'calories': 120, 'weight': 150, 'protein': 5, 'carbs': 10, 'fat': 8},
-    'chicken': {'calories': 220, 'weight': 120, 'protein': 26, 'carbs': 0, 'fat': 12},
-    'egg': {'calories': 70, 'weight': 50, 'protein': 6.5, 'carbs': 0.6, 'fat': 5.0},
-    'rice': {'calories': 200, 'weight': 150, 'protein': 4, 'carbs': 44, 'fat': 0.4},
-    'vegetables': {'calories': 45, 'weight': 100, 'protein': 2, 'carbs': 9, 'fat': 0.2},
-    'daging sapi': {'calories': 250, 'weight': 100, 'protein': 25, 'carbs': 0, 'fat': 17},
-    'daging': {'calories': 250, 'weight': 100, 'protein': 25, 'carbs': 0, 'fat': 17},
-    'saus': {'calories': 50, 'weight': 30, 'protein': 0.5, 'carbs': 5, 'fat': 3.5},
-    'bumbu': {'calories': 40, 'weight': 20, 'protein': 0.5, 'carbs': 4, 'fat': 2.5},
-    'kerupuk': {'calories': 80, 'weight': 15, 'protein': 1, 'carbs': 12, 'fat': 4},
-    'kol': {'calories': 10, 'weight': 40, 'protein': 0.5, 'carbs': 2, 'fat': 0.1},
+    'pita bread': {
+      'calories': 318,
+      'weight': 120,
+      'protein': 8,
+      'carbs': 55,
+      'fat': 2,
+    },
+    'beef': {
+      'calories': 426,
+      'weight': 150,
+      'protein': 38,
+      'carbs': 0,
+      'fat': 30,
+    },
+    'lettuce': {
+      'calories': 6,
+      'weight': 30,
+      'protein': 0.5,
+      'carbs': 1,
+      'fat': 0.1,
+    },
+    'shredded carrots': {
+      'calories': 11,
+      'weight': 25,
+      'protein': 0.3,
+      'carbs': 2.5,
+      'fat': 0.1,
+    },
+    'red cabbage': {
+      'calories': 7,
+      'weight': 25,
+      'protein': 0.3,
+      'carbs': 1.8,
+      'fat': 0.1,
+    },
+    'corn': {
+      'calories': 129,
+      'weight': 150,
+      'protein': 4,
+      'carbs': 28,
+      'fat': 1.5,
+    },
+    'asinan': {
+      'calories': 180,
+      'weight': 200,
+      'protein': 3,
+      'carbs': 35,
+      'fat': 2,
+    },
+    'soto': {
+      'calories': 250,
+      'weight': 250,
+      'protein': 18,
+      'carbs': 10,
+      'fat': 15,
+    },
+    'nasi goreng': {
+      'calories': 450,
+      'weight': 300,
+      'protein': 14,
+      'carbs': 70,
+      'fat': 16,
+    },
+    'salad bowl': {
+      'calories': 120,
+      'weight': 150,
+      'protein': 5,
+      'carbs': 10,
+      'fat': 8,
+    },
+    'chicken': {
+      'calories': 220,
+      'weight': 120,
+      'protein': 26,
+      'carbs': 0,
+      'fat': 12,
+    },
+    'egg': {
+      'calories': 70,
+      'weight': 50,
+      'protein': 6.5,
+      'carbs': 0.6,
+      'fat': 5.0,
+    },
+    'rice': {
+      'calories': 200,
+      'weight': 150,
+      'protein': 4,
+      'carbs': 44,
+      'fat': 0.4,
+    },
+    'vegetables': {
+      'calories': 45,
+      'weight': 100,
+      'protein': 2,
+      'carbs': 9,
+      'fat': 0.2,
+    },
+    'daging sapi': {
+      'calories': 250,
+      'weight': 100,
+      'protein': 25,
+      'carbs': 0,
+      'fat': 17,
+    },
+    'daging': {
+      'calories': 250,
+      'weight': 100,
+      'protein': 25,
+      'carbs': 0,
+      'fat': 17,
+    },
+    'saus': {
+      'calories': 50,
+      'weight': 30,
+      'protein': 0.5,
+      'carbs': 5,
+      'fat': 3.5,
+    },
+    'bumbu': {
+      'calories': 40,
+      'weight': 20,
+      'protein': 0.5,
+      'carbs': 4,
+      'fat': 2.5,
+    },
+    'kerupuk': {
+      'calories': 80,
+      'weight': 15,
+      'protein': 1,
+      'carbs': 12,
+      'fat': 4,
+    },
+    'kol': {
+      'calories': 10,
+      'weight': 40,
+      'protein': 0.5,
+      'carbs': 2,
+      'fat': 0.1,
+    },
     'tahu': {'calories': 60, 'weight': 60, 'protein': 6, 'carbs': 2, 'fat': 4},
     'tempe': {'calories': 90, 'weight': 50, 'protein': 9, 'carbs': 8, 'fat': 5},
-    'telur': {'calories': 75, 'weight': 55, 'protein': 7, 'carbs': 0.7, 'fat': 5.3},
+    'telur': {
+      'calories': 75,
+      'weight': 55,
+      'protein': 7,
+      'carbs': 0.7,
+      'fat': 5.3,
+    },
   };
 
   @override
@@ -73,32 +193,6 @@ class _MealDetailPageState extends State<MealDetailPage> {
     _carbs = (widget.meal['carbs'] as num?)?.toDouble() ?? 0.0;
     _fat = (widget.meal['fat'] as num?)?.toDouble() ?? 0.0;
     _ingredientsList = _parseIngredients();
-    
-    _loadBookmarkState();
-  }
-
-  Future<void> _loadBookmarkState() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isBookmarked = prefs.getBool('meal_bookmark_${widget.meal['id']}') ?? false;
-    });
-  }
-
-  Future<void> _toggleBookmark() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isBookmarked = !_isBookmarked;
-    });
-    await prefs.setBool('meal_bookmark_${widget.meal['id']}', _isBookmarked);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isBookmarked ? 'Makanan disimpan ke Favorit.' : 'Makanan dihapus dari Favorit.'),
-          backgroundColor: AppTheme.primaryColor,
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
   }
 
   String _formatPortion(double portion) {
@@ -106,37 +200,6 @@ class _MealDetailPageState extends State<MealDetailPage> {
       return portion.toInt().toString();
     }
     return portion.toStringAsFixed(1);
-  }
-
-  Widget _buildMealImage(String imagePath) {
-    if (imagePath.startsWith('assets/')) {
-      return Image.asset(
-        imagePath,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.restaurant_rounded, color: Colors.grey, size: 50),
-        ),
-      );
-    } else if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return Image.network(
-        imagePath,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.restaurant_rounded, color: Colors.grey, size: 50),
-        ),
-      );
-    } else {
-      return Image.file(
-        File(imagePath),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.restaurant_rounded, color: Colors.grey, size: 50),
-        ),
-      );
-    }
   }
 
   List<Map<String, dynamic>> _parseIngredients() {
@@ -211,11 +274,11 @@ class _MealDetailPageState extends State<MealDetailPage> {
     setState(() {
       _isSaving = true;
     });
-    
+
     final mealId = widget.meal['id'] as int;
     final componentsStr = _ingredientsList.map((e) => e['name']).join(', ');
 
-    // The saved values should represent the portioned values if the user scaled it, 
+    // The saved values should represent the portioned values if the user scaled it,
     // keeping the database sync simple and clean.
     final payload = {
       'food_name': _foodName,
@@ -238,7 +301,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
             ),
           );
         }
-        
+
         // Reset local portion multiplier to 1 since database now holds the scaled values
         setState(() {
           _portion = 1.0;
@@ -255,7 +318,10 @@ class _MealDetailPageState extends State<MealDetailPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan perubahan: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('Gagal menyimpan perubahan: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -273,8 +339,13 @@ class _MealDetailPageState extends State<MealDetailPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Ubah Nama Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Ubah Nama Makanan',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -301,7 +372,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text('Simpan'),
             ),
@@ -313,14 +386,21 @@ class _MealDetailPageState extends State<MealDetailPage> {
 
   // Edit Macro Card Dialog
   Future<void> _editMacro(String key, String label, double currentValue) async {
-    final controller = TextEditingController(text: currentValue.toStringAsFixed(0));
+    final controller = TextEditingController(
+      text: currentValue.toStringAsFixed(0),
+    );
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('Ubah $label', style: const TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Ubah $label',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -352,7 +432,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text('Simpan'),
             ),
@@ -364,14 +446,21 @@ class _MealDetailPageState extends State<MealDetailPage> {
 
   // Edit Total Weight Dialog (recalculates portion scale)
   Future<void> _editTotalWeight(double currentTotalWeight) async {
-    final controller = TextEditingController(text: currentTotalWeight.toStringAsFixed(0));
+    final controller = TextEditingController(
+      text: currentTotalWeight.toStringAsFixed(0),
+    );
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Edit Total Berat', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Edit Total Berat',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -390,7 +479,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
               onPressed: () async {
                 final targetWeight = double.tryParse(controller.text.trim());
                 if (targetWeight == null || targetWeight <= 0) return;
-                
+
                 double baseWeight = 0.0;
                 for (var ing in _ingredientsList) {
                   baseWeight += (ing['weight'] as num).toDouble();
@@ -406,7 +495,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text('Simpan'),
             ),
@@ -419,11 +510,11 @@ class _MealDetailPageState extends State<MealDetailPage> {
   // Edit Individual Ingredient Dialog
   Future<void> _editIngredient(int index) async {
     final ing = _ingredientsList[index];
-    
+
     String rawName = ing['name'] ?? 'Bahan';
     double initialQty = 1.0;
     String initialUnit = 'Potong';
-    
+
     final regExp = RegExp(r'^(.+?)\s*\(\s*([\d\.]+)\s*(.+?)\s*\)$');
     if (regExp.hasMatch(rawName)) {
       final match = regExp.firstMatch(rawName)!;
@@ -433,11 +524,33 @@ class _MealDetailPageState extends State<MealDetailPage> {
     }
 
     final nameController = TextEditingController(text: rawName);
-    final quantityController = TextEditingController(text: initialQty.toStringAsFixed(0));
-    String selectedUnit = ['Porsi', 'Potong', 'Iris', 'Mangkok', 'Gelas', 'Sendok Makan', 'Butir'].contains(initialUnit)
+    final quantityController = TextEditingController(
+      text: initialQty.toStringAsFixed(0),
+    );
+    String selectedUnit =
+        [
+          'Porsi',
+          'Potong',
+          'Iris',
+          'Mangkok',
+          'Gelas',
+          'Sendok Makan',
+          'Butir',
+        ].contains(initialUnit)
         ? initialUnit
         : 'Potong';
-    const List<String> units = ['Porsi', 'Potong', 'Iris', 'Mangkok', 'Gelas', 'Sendok Makan', 'Butir'];
+    const List<String> units = [
+      'Porsi',
+      'Potong',
+      'Iris',
+      'Mangkok',
+      'Gelas',
+      'Sendok Makan',
+      'Butir',
+    ];
+    Map<String, dynamic>? selectedFood;
+    List<Map<String, dynamic>> suggestions = [];
+    Timer? debounce;
 
     showDialog(
       context: context,
@@ -446,15 +559,67 @@ class _MealDetailPageState extends State<MealDetailPage> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Ubah Bahan Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                'Ubah Bahan Makanan',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: nameController,
                     decoration: const InputDecoration(labelText: 'Nama Bahan'),
+                    onChanged: (value) {
+                      selectedFood = null;
+                      debounce?.cancel();
+                      debounce = Timer(
+                        const Duration(milliseconds: 350),
+                        () async {
+                          final query = value.trim();
+                          if (query.length < 2) {
+                            setDialogState(() => suggestions = []);
+                            return;
+                          }
+                          final results = await _apiService.searchFoods(query);
+                          setDialogState(() => suggestions = results);
+                        },
+                      );
+                    },
                   ),
+                  if (suggestions.isNotEmpty)
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 160),
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: suggestions.length,
+                        itemBuilder: (context, i) {
+                          final item = suggestions[i];
+                          return ListTile(
+                            dense: true,
+                            title: Text(item['food_name'].toString()),
+                            subtitle: Text(
+                              '${(item['calories'] as num).toStringAsFixed(0)} kkal / ${(item['serving_size_g'] as num).toStringAsFixed(0)}g',
+                            ),
+                            onTap: () {
+                              setDialogState(() {
+                                nameController.text = item['food_name']
+                                    .toString();
+                                selectedFood = item;
+                                suggestions = [];
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -462,8 +627,12 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         flex: 2,
                         child: TextField(
                           controller: quantityController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: const InputDecoration(labelText: 'Jumlah'),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Jumlah',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -471,7 +640,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         flex: 3,
                         child: DropdownButtonFormField<String>(
                           initialValue: selectedUnit,
-                          decoration: const InputDecoration(labelText: 'Satuan'),
+                          decoration: const InputDecoration(
+                            labelText: 'Satuan',
+                          ),
                           items: units.map((unit) {
                             return DropdownMenuItem<String>(
                               value: unit,
@@ -494,12 +665,16 @@ class _MealDetailPageState extends State<MealDetailPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     final newName = nameController.text.trim();
-                    final qty = double.tryParse(quantityController.text.trim()) ?? 1.0;
+                    final qty =
+                        double.tryParse(quantityController.text.trim()) ?? 1.0;
                     if (newName.isEmpty) return;
 
                     Navigator.pop(context);
@@ -507,38 +682,40 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     double unitWeight = 100.0;
                     if (selectedUnit == 'Porsi') {
                       unitWeight = 150.0;
-                    } else if (selectedUnit == 'Potong') unitWeight = 80.0;
-                    else if (selectedUnit == 'Iris') unitWeight = 20.0;
-                    else if (selectedUnit == 'Mangkok') unitWeight = 200.0;
-                    else if (selectedUnit == 'Gelas') unitWeight = 200.0;
-                    else if (selectedUnit == 'Sendok Makan') unitWeight = 15.0;
-                    else if (selectedUnit == 'Butir') unitWeight = 50.0;
+                    } else if (selectedUnit == 'Potong')
+                      unitWeight = 80.0;
+                    else if (selectedUnit == 'Iris')
+                      unitWeight = 20.0;
+                    else if (selectedUnit == 'Mangkok')
+                      unitWeight = 200.0;
+                    else if (selectedUnit == 'Gelas')
+                      unitWeight = 200.0;
+                    else if (selectedUnit == 'Sendok Makan')
+                      unitWeight = 15.0;
+                    else if (selectedUnit == 'Butir')
+                      unitWeight = 50.0;
 
                     final totalWeight = qty * unitWeight;
-
-                    final key = newName.toLowerCase();
-                    String matchedKey = '';
-                    for (var k in _ingredientDatabase.keys) {
-                      if (key.contains(k) || k.contains(key)) {
-                        matchedKey = k;
-                        break;
-                      }
-                    }
 
                     double calsPerGram = 1.2;
                     double protPerGram = 1.2 * 0.15 / 4;
                     double carbPerGram = 1.2 * 0.55 / 4;
                     double fatPerGram = 1.2 * 0.30 / 9;
 
-                    if (matchedKey.isNotEmpty) {
-                      final dbItem = _ingredientDatabase[matchedKey]!;
-                      final dbWeight = (dbItem['weight'] ?? 100.0).toDouble();
-                      final dbCals = (dbItem['calories'] ?? 120.0).toDouble();
-                      
-                      calsPerGram = dbCals / dbWeight;
-                      protPerGram = ((dbItem['protein'] ?? (dbCals * 0.15 / 4)) / dbWeight).toDouble();
-                      carbPerGram = ((dbItem['carbs'] ?? (dbCals * 0.55 / 4)) / dbWeight).toDouble();
-                      fatPerGram = ((dbItem['fat'] ?? (dbCals * 0.30 / 9)) / dbWeight).toDouble();
+                    if (selectedFood != null) {
+                      final servingSize =
+                          (selectedFood!['serving_size_g'] as num).toDouble();
+                      final dbCals = (selectedFood!['calories'] as num)
+                          .toDouble();
+                      final dbProt = (selectedFood!['protein'] as num)
+                          .toDouble();
+                      final dbCarb = (selectedFood!['carbs'] as num).toDouble();
+                      final dbFat = (selectedFood!['fat'] as num).toDouble();
+
+                      calsPerGram = dbCals / servingSize;
+                      protPerGram = dbProt / servingSize;
+                      carbPerGram = dbCarb / servingSize;
+                      fatPerGram = dbFat / servingSize;
                     }
 
                     final newCals = calsPerGram * totalWeight;
@@ -562,7 +739,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: const Text('Simpan'),
                 ),
@@ -579,7 +758,18 @@ class _MealDetailPageState extends State<MealDetailPage> {
     final nameController = TextEditingController();
     final quantityController = TextEditingController(text: '1');
     String selectedUnit = 'Potong';
-    const List<String> units = ['Porsi', 'Potong', 'Iris', 'Mangkok', 'Gelas', 'Sendok Makan', 'Butir'];
+    const List<String> units = [
+      'Porsi',
+      'Potong',
+      'Iris',
+      'Mangkok',
+      'Gelas',
+      'Sendok Makan',
+      'Butir',
+    ];
+    Map<String, dynamic>? selectedFood;
+    List<Map<String, dynamic>> suggestions = [];
+    Timer? debounce;
 
     showDialog(
       context: context,
@@ -588,8 +778,13 @@ class _MealDetailPageState extends State<MealDetailPage> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Tambah Bahan Makanan', style: TextStyle(fontWeight: FontWeight.bold)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                'Tambah Bahan Makanan',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -597,7 +792,54 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     controller: nameController,
                     autofocus: true,
                     decoration: const InputDecoration(labelText: 'Nama Bahan'),
+                    onChanged: (value) {
+                      selectedFood = null;
+                      debounce?.cancel();
+                      debounce = Timer(
+                        const Duration(milliseconds: 350),
+                        () async {
+                          final query = value.trim();
+                          if (query.length < 2) {
+                            setDialogState(() => suggestions = []);
+                            return;
+                          }
+                          final results = await _apiService.searchFoods(query);
+                          setDialogState(() => suggestions = results);
+                        },
+                      );
+                    },
                   ),
+                  if (suggestions.isNotEmpty)
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 160),
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: suggestions.length,
+                        itemBuilder: (context, i) {
+                          final item = suggestions[i];
+                          return ListTile(
+                            dense: true,
+                            title: Text(item['food_name'].toString()),
+                            subtitle: Text(
+                              '${(item['calories'] as num).toStringAsFixed(0)} kkal / ${(item['serving_size_g'] as num).toStringAsFixed(0)}g',
+                            ),
+                            onTap: () {
+                              setDialogState(() {
+                                nameController.text = item['food_name']
+                                    .toString();
+                                selectedFood = item;
+                                suggestions = [];
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -605,8 +847,12 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         flex: 2,
                         child: TextField(
                           controller: quantityController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: const InputDecoration(labelText: 'Jumlah'),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: 'Jumlah',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -614,7 +860,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         flex: 3,
                         child: DropdownButtonFormField<String>(
                           initialValue: selectedUnit,
-                          decoration: const InputDecoration(labelText: 'Satuan'),
+                          decoration: const InputDecoration(
+                            labelText: 'Satuan',
+                          ),
                           items: units.map((unit) {
                             return DropdownMenuItem<String>(
                               value: unit,
@@ -637,12 +885,16 @@ class _MealDetailPageState extends State<MealDetailPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () async {
                     final newName = nameController.text.trim();
-                    final qty = double.tryParse(quantityController.text.trim()) ?? 1.0;
+                    final qty =
+                        double.tryParse(quantityController.text.trim()) ?? 1.0;
                     if (newName.isEmpty) return;
 
                     Navigator.pop(context);
@@ -650,38 +902,40 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     double unitWeight = 100.0;
                     if (selectedUnit == 'Porsi') {
                       unitWeight = 150.0;
-                    } else if (selectedUnit == 'Potong') unitWeight = 80.0;
-                    else if (selectedUnit == 'Iris') unitWeight = 20.0;
-                    else if (selectedUnit == 'Mangkok') unitWeight = 200.0;
-                    else if (selectedUnit == 'Gelas') unitWeight = 200.0;
-                    else if (selectedUnit == 'Sendok Makan') unitWeight = 15.0;
-                    else if (selectedUnit == 'Butir') unitWeight = 50.0;
+                    } else if (selectedUnit == 'Potong')
+                      unitWeight = 80.0;
+                    else if (selectedUnit == 'Iris')
+                      unitWeight = 20.0;
+                    else if (selectedUnit == 'Mangkok')
+                      unitWeight = 200.0;
+                    else if (selectedUnit == 'Gelas')
+                      unitWeight = 200.0;
+                    else if (selectedUnit == 'Sendok Makan')
+                      unitWeight = 15.0;
+                    else if (selectedUnit == 'Butir')
+                      unitWeight = 50.0;
 
                     final totalWeight = qty * unitWeight;
-
-                    final key = newName.toLowerCase();
-                    String matchedKey = '';
-                    for (var k in _ingredientDatabase.keys) {
-                      if (key.contains(k) || k.contains(key)) {
-                        matchedKey = k;
-                        break;
-                      }
-                    }
 
                     double calsPerGram = 1.2;
                     double protPerGram = 1.2 * 0.15 / 4;
                     double carbPerGram = 1.2 * 0.55 / 4;
                     double fatPerGram = 1.2 * 0.30 / 9;
 
-                    if (matchedKey.isNotEmpty) {
-                      final dbItem = _ingredientDatabase[matchedKey]!;
-                      final dbWeight = (dbItem['weight'] ?? 100.0).toDouble();
-                      final dbCals = (dbItem['calories'] ?? 120.0).toDouble();
-                      
-                      calsPerGram = dbCals / dbWeight;
-                      protPerGram = ((dbItem['protein'] ?? (dbCals * 0.15 / 4)) / dbWeight).toDouble();
-                      carbPerGram = ((dbItem['carbs'] ?? (dbCals * 0.55 / 4)) / dbWeight).toDouble();
-                      fatPerGram = ((dbItem['fat'] ?? (dbCals * 0.30 / 9)) / dbWeight).toDouble();
+                    if (selectedFood != null) {
+                      final servingSize =
+                          (selectedFood!['serving_size_g'] as num).toDouble();
+                      final dbCals = (selectedFood!['calories'] as num)
+                          .toDouble();
+                      final dbProt = (selectedFood!['protein'] as num)
+                          .toDouble();
+                      final dbCarb = (selectedFood!['carbs'] as num).toDouble();
+                      final dbFat = (selectedFood!['fat'] as num).toDouble();
+
+                      calsPerGram = dbCals / servingSize;
+                      protPerGram = dbProt / servingSize;
+                      carbPerGram = dbCarb / servingSize;
+                      fatPerGram = dbFat / servingSize;
                     }
 
                     final newCals = calsPerGram * totalWeight;
@@ -705,7 +959,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: const Text('Tambah'),
                 ),
@@ -723,7 +979,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text(
             'Hapus Catatan',
             style: TextStyle(
@@ -731,7 +989,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
               color: AppTheme.neutralColor,
             ),
           ),
-          content: const Text('Apakah Anda yakin ingin menghapus catatan makanan ini dari jurnal harian?'),
+          content: const Text(
+            'Apakah Anda yakin ingin menghapus catatan makanan ini dari jurnal harian?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -766,7 +1026,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(res['message'] ?? 'Gagal menghapus catatan.'),
+                          content: Text(
+                            res['message'] ?? 'Gagal menghapus catatan.',
+                          ),
                           backgroundColor: Colors.redAccent,
                         ),
                       );
@@ -790,7 +1052,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text(
                 'Hapus',
@@ -836,11 +1100,17 @@ class _MealDetailPageState extends State<MealDetailPage> {
                       width: double.infinity,
                       decoration: const BoxDecoration(
                         color: Colors.black,
-                        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(32),
+                        ),
                       ),
                       child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
-                        child: _buildMealImage(widget.meal['image_path'] ?? ''),
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(32),
+                        ),
+                        child: MealImage(
+                          imagePath: widget.meal['image_path'] ?? '',
+                        ),
                       ),
                     ),
                     Positioned.fill(
@@ -857,7 +1127,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                                 Colors.black.withValues(alpha: 0.8),
                               ],
                             ),
-                            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+                            borderRadius: const BorderRadius.vertical(
+                              bottom: Radius.circular(32),
+                            ),
                           ),
                         ),
                       ),
@@ -908,34 +1180,17 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         children: [
                           GestureDetector(
                             onTap: () => Navigator.pop(context),
-                            child: _buildTopActionButton(Icons.arrow_back_ios_new_rounded),
+                            child: _buildTopActionButton(
+                              Icons.arrow_back_ios_new_rounded,
+                            ),
                           ),
                           const Spacer(),
                           GestureDetector(
-                            onTap: () {
-                              Clipboard.setData(ClipboardData(text: 'Nutrify - Catatan Makanan: $_foodName (${_calories.toStringAsFixed(0)} kkal)'));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Catatan makanan berhasil disalin ke papan klip!'),
-                                  backgroundColor: AppTheme.primaryColor,
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                            child: _buildTopActionButton(Icons.ios_share_rounded),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: _toggleBookmark,
-                            child: _buildTopActionButton(
-                              _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
-                              iconColor: _isBookmarked ? Colors.amber : Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
                             onTap: _confirmDelete,
-                            child: _buildTopActionButton(Icons.delete_outline_rounded, iconColor: Colors.redAccent),
+                            child: _buildTopActionButton(
+                              Icons.delete_outline_rounded,
+                              iconColor: Colors.redAccent,
+                            ),
                           ),
                         ],
                       ),
@@ -950,7 +1205,10 @@ class _MealDetailPageState extends State<MealDetailPage> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(12),
@@ -971,7 +1229,10 @@ class _MealDetailPageState extends State<MealDetailPage> {
                           color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
                         child: Row(
                           children: [
                             _buildPortionButton(
@@ -986,7 +1247,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                               },
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: Text(
                                 _formatPortion(_portion),
                                 style: const TextStyle(
@@ -1027,7 +1290,8 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     childAspectRatio: 2.1,
                     children: [
                       GestureDetector(
-                        onTap: () => _editMacro('calories', 'Kalori', displayCalories),
+                        onTap: () =>
+                            _editMacro('calories', 'Kalori', displayCalories),
                         child: _buildMacroCard(
                           icon: Icons.blur_on_rounded,
                           color: Colors.blue.shade50,
@@ -1037,7 +1301,8 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => _editMacro('protein', 'Protein', displayProtein),
+                        onTap: () =>
+                            _editMacro('protein', 'Protein', displayProtein),
                         child: _buildMacroCard(
                           icon: Icons.workspace_premium_rounded,
                           color: Colors.red.shade50,
@@ -1047,7 +1312,8 @@ class _MealDetailPageState extends State<MealDetailPage> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => _editMacro('carbs', 'Karbohidrat', displayCarbs),
+                        onTap: () =>
+                            _editMacro('carbs', 'Karbohidrat', displayCarbs),
                         child: _buildMacroCard(
                           icon: Icons.layers_rounded,
                           color: Colors.orange.shade50,
@@ -1117,10 +1383,16 @@ class _MealDetailPageState extends State<MealDetailPage> {
                 // Ingredient List (Fully functional list with edit and delete)
                 if (_ingredientsList.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     child: Text(
                       'Rincian bahan tidak tersedia.',
-                      style: TextStyle(color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   )
                 else
@@ -1128,16 +1400,26 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _ingredientsList.length,
-                    padding: const EdgeInsets.only(left: 24, right: 24, bottom: 100),
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    padding: const EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      bottom: 100,
+                    ),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final ing = _ingredientsList[index];
                       final name = ing['name'];
-                      final ingCalories = (ing['calories'] as num).toDouble() * _portion;
-                      final ingWeight = (ing['weight'] as num).toDouble() * _portion;
+                      final ingCalories =
+                          (ing['calories'] as num).toDouble() * _portion;
+                      final ingWeight =
+                          (ing['weight'] as num).toDouble() * _portion;
 
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(16),
@@ -1154,7 +1436,11 @@ class _MealDetailPageState extends State<MealDetailPage> {
                                 _recalculateTotals();
                                 await _saveChangesToBackend();
                               },
-                              child: Icon(Icons.close_rounded, color: Colors.grey.shade400, size: 20),
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: Colors.grey.shade400,
+                                size: 20,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1193,7 +1479,11 @@ class _MealDetailPageState extends State<MealDetailPage> {
                             // Edit ingredient icon
                             GestureDetector(
                               onTap: () => _editIngredient(index),
-                              child: Icon(Icons.edit_outlined, color: Colors.grey.shade400, size: 18),
+                              child: Icon(
+                                Icons.edit_outlined,
+                                color: Colors.grey.shade400,
+                                size: 18,
+                              ),
                             ),
                           ],
                         ),
@@ -1218,7 +1508,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                   foregroundColor: Colors.white,
                   elevation: 4,
                   shadowColor: Colors.black26,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1251,7 +1543,10 @@ class _MealDetailPageState extends State<MealDetailPage> {
     );
   }
 
-  Widget _buildTopActionButton(IconData icon, {Color iconColor = Colors.black87}) {
+  Widget _buildTopActionButton(
+    IconData icon, {
+    Color iconColor = Colors.black87,
+  }) {
     return Container(
       width: 42,
       height: 42,
@@ -1270,7 +1565,10 @@ class _MealDetailPageState extends State<MealDetailPage> {
     );
   }
 
-  Widget _buildPortionButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _buildPortionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1304,10 +1602,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             child: Icon(icon, color: iconColor, size: 18),
           ),
           const SizedBox(width: 12),
@@ -1336,7 +1631,11 @@ class _MealDetailPageState extends State<MealDetailPage> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(Icons.edit_outlined, color: Colors.grey.shade400, size: 12),
+                    Icon(
+                      Icons.edit_outlined,
+                      color: Colors.grey.shade400,
+                      size: 12,
+                    ),
                   ],
                 ),
               ],

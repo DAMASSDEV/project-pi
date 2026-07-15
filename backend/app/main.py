@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.database import engine, Base
 from app.routers.auth import router as auth_router
 from app.routers.chat import router as chat_router
@@ -18,8 +20,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 import csv
-import os
 import time
 from sqlalchemy.exc import OperationalError
 from app.core.database import SessionLocal

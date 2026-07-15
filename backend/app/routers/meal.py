@@ -8,6 +8,26 @@ from app.schemas.meal import MealLogCreate, MealLogResponse, ScanResponse
 
 router = APIRouter()
 
+@router.get("/api/foods/search")
+async def search_foods(q: str = Query(...), db: Session = Depends(get_db)):
+    query = q.strip()
+    if len(query) < 2:
+        return {"success": True, "results": []}
+
+    matches = db.query(Food).filter(Food.food_name.ilike(f"%{query}%")).limit(10).all()
+    results = [
+        {
+            "food_name": food.food_name,
+            "serving_size_g": food.serving_size_g,
+            "calories": food.calories,
+            "protein": food.protein,
+            "carbs": food.carbohydrates,
+            "fat": food.fat,
+        }
+        for food in matches
+    ]
+    return {"success": True, "results": results}
+
 @router.post("/api/meals/scan", response_model=ScanResponse)
 async def scan_meal(payload: dict, db: Session = Depends(get_db)):
     food_name = payload.get("food_name", "").strip()
@@ -16,8 +36,10 @@ async def scan_meal(payload: dict, db: Session = Depends(get_db)):
 
     name_lower = food_name.lower()
     
-    # Try exact match or substring search
-    db_food = db.query(Food).filter(Food.food_name.ilike(f"%{food_name}%")).first()
+    # Try exact match first, then substring search
+    db_food = db.query(Food).filter(Food.food_name.ilike(food_name)).first()
+    if not db_food:
+        db_food = db.query(Food).filter(Food.food_name.ilike(f"%{food_name}%")).first()
 
     # If not found, try word-by-word search
     if not db_food:
@@ -95,6 +117,10 @@ async def scan_meal(payload: dict, db: Session = Depends(get_db)):
         elif "toge" in name_lower:
             desc_parts.append("Toge Goreng merupakan hidangan gurih kaya protein nabati dari tahu dan tauco. Pilihan yang lezat dan rendah lemak.")
             components = "Toge rebus, tahu kuning, ketupat, mie kuning, kuah tauco gurih"
+            image_path = "assets/image1.png"
+        elif "cungkring" in name_lower:
+            desc_parts.append("Cungkring kaya protein hewani dari paru dan kikil sapi, namun cukup tinggi lemak, konsumsilah dalam porsi wajar.")
+            components = "Ketupat, paru sapi, kikil sapi, bumbu kacang, kecap pedas"
             image_path = "assets/image1.png"
         else:
             components = "Bahan makanan olahan segar"
@@ -185,6 +211,11 @@ async def update_meal(meal_id: int, payload: dict, db: Session = Depends(get_db)
 
 import os
 import shutil
+import uuid
+from app.core.config import PUBLIC_BASE_URL
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "../bogor_yolo_best.pt")
 if not os.path.exists(MODEL_PATH):
@@ -229,12 +260,14 @@ except Exception as e:
 
 @router.post("/api/meals/scan-image")
 async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    temp_dir = "/tmp" if os.name != "nt" else "C:\\Temp"
-    os.makedirs(temp_dir, exist_ok=True)
-    temp_file_path = os.path.join(temp_dir, file.filename or "scan_upload.jpg")
+    ext = os.path.splitext(file.filename or "")[1] or ".jpg"
+    saved_filename = f"{uuid.uuid4().hex}{ext}"
+    saved_path = os.path.join(UPLOAD_DIR, saved_filename)
 
-    with open(temp_file_path, "wb") as buffer:
+    with open(saved_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    image_url = f"{PUBLIC_BASE_URL}/uploads/{saved_filename}"
 
     detected_name = None
     detected_confidence = 0.0
@@ -242,7 +275,7 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
     print(f"DEBUG: Memulai pemindaian gambar. Status yolo_model: {yolo_model is not None}")
     if yolo_model is not None:
         try:
-            results = yolo_model(temp_file_path, verbose=False)
+            results = yolo_model(saved_path, verbose=False)
             if results and len(results) > 0:
                 boxes = results[0].boxes
                 if boxes is not None and len(boxes) > 0:
@@ -270,11 +303,6 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
     else:
         print("DEBUG: yolo_model bernilai None! Model gagal dimuat saat startup.")
 
-    try:
-        os.remove(temp_file_path)
-    except Exception:
-        pass
-
     if detected_name is not None:
         scan_result = await scan_meal({"food_name": detected_name}, db)
         return ScanResponse(
@@ -287,7 +315,7 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
             health_score=scan_result.health_score,
             components=scan_result.components,
             description=scan_result.description,
-            image_path=scan_result.image_path,
+            image_path=image_url,
             is_bogor_food=True,
             alert_message=""
         )
@@ -302,8 +330,8 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
             health_score=0,
             components="",
             description="",
-            image_path="assets/image3.png",
+            image_path=image_url,
             is_bogor_food=False,
-            alert_message="Makanan ini bukan makanan khas Bogor yang dapat dikenali oleh AI kami. Silakan masukkan nama bahan makanan secara manual untuk melihat kandungan gizinya dari database kami."
+            alert_message="Makanan ini tidak dikenali sebagai makanan khas Bogor."
         )
 

@@ -23,6 +23,7 @@ backend/venv/
 backend/.env
 backend/.pytest_cache/
 backend/.cache/
+backend/uploads/
 *.pyc
 *.pyo
 *.pyd

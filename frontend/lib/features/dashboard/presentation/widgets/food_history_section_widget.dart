@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/skeleton.dart';
+import '../../../../core/widgets/meal_image.dart';
 import '../../../../core/services/date_helper.dart';
 import '../pages/meal_detail_page.dart';
 
@@ -161,8 +162,8 @@ class FoodHistorySectionWidget extends StatelessWidget {
               height: 72,
               color: const Color(0xFFF8F9FA),
               padding: const EdgeInsets.all(6),
-              child: Image.asset(
-                imgPath,
+              child: MealImage(
+                imagePath: imgPath,
                 fit: BoxFit.contain,
               ),
             ),

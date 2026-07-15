@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/meal_image.dart';
 
 class FoodLogCard extends StatelessWidget {
   final String imagePath;
@@ -82,8 +83,8 @@ class FoodLogCard extends StatelessWidget {
                   height: 56,
                   color: const Color(0xFFF8F9FA),
                   padding: const EdgeInsets.all(6),
-                  child: Image.asset(
-                    imagePath,
+                  child: MealImage(
+                    imagePath: imagePath,
                     fit: BoxFit.contain,
                   ),
                 ),
