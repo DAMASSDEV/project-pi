@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class SignInRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 class SignInResponse(BaseModel):
@@ -12,7 +12,7 @@ class SignInResponse(BaseModel):
 
 class SignUpRequest(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     password: str
 
 class SignUpResponse(BaseModel):
@@ -22,16 +22,17 @@ class SignUpResponse(BaseModel):
     user: dict | None = None
 
 class ForgotPasswordRequest(BaseModel):
-    email: str
+    email: EmailStr
 
 class ForgotPasswordResponse(BaseModel):
     success: bool
     message: str
 
 class ResetPasswordRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 class ResetPasswordResponse(BaseModel):
     success: bool
     message: str
+

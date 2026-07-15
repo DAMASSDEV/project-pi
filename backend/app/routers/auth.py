@@ -1,6 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.security import (
+    hash_password,
+    verify_password,
+    is_password_hashed,
+    create_access_token,
+)
 from app.schemas.auth import (
     SignInRequest, SignInResponse,
     SignUpRequest, SignUpResponse,
@@ -15,15 +21,28 @@ router = APIRouter()
 @router.post("/api/auth/signin", response_model=SignInResponse)
 async def sign_in(payload: SignInRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
-    if not user or user.password != payload.password:
+    if not user:
         raise HTTPException(status_code=401, detail="Email atau kata sandi salah.")
-    
+
+    # Verify password (supports both bcrypt and legacy plain text)
+    if is_password_hashed(user.password):
+        if not verify_password(payload.password, user.password):
+            raise HTTPException(status_code=401, detail="Email atau kata sandi salah.")
+    else:
+        # Legacy plain text password — verify then auto-migrate to bcrypt
+        if user.password != payload.password:
+            raise HTTPException(status_code=401, detail="Email atau kata sandi salah.")
+        user.password = hash_password(payload.password)
+        db.commit()
+
     personalization_exists = db.query(Personalization).filter(Personalization.email == user.email).first() is not None
-    
+
+    token = create_access_token(data={"sub": user.email, "name": user.name})
+
     return SignInResponse(
         success=True,
         message="Sign in successful",
-        token="mock-jwt-token-12345",
+        token=token,
         user={
             "email": user.email,
             "name": user.name,
@@ -40,15 +59,17 @@ async def sign_up(payload: SignUpRequest, db: Session = Depends(get_db)):
     new_user = User(
         email=payload.email,
         name=payload.name,
-        password=payload.password
+        password=hash_password(payload.password)
     )
     db.add(new_user)
     db.commit()
 
+    token = create_access_token(data={"sub": payload.email, "name": payload.name})
+
     return SignUpResponse(
         success=True,
         message="Registrasi berhasil! Silakan masuk.",
-        token="mock-jwt-token-67890",
+        token=token,
         user={
             "email": payload.email,
             "name": payload.name
@@ -72,9 +93,10 @@ async def reset_password(payload: ResetPasswordRequest, db: Session = Depends(ge
     if not user:
         raise HTTPException(status_code=404, detail="Email tidak ditemukan.")
     
-    user.password = payload.password
+    user.password = hash_password(payload.password)
     db.commit()
     return ResetPasswordResponse(
         success=True,
         message="Kata sandi berhasil diperbarui!"
     )
+

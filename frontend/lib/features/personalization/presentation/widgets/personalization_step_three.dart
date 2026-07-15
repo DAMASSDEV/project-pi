@@ -96,7 +96,7 @@ class PersonalizationStepFour extends StatelessWidget {
                 const SizedBox(height: 20),
                 _buildLabel('TUJUAN UTAMA'),
                 DropdownButtonFormField<String>(
-                  value: goal,
+                  initialValue: goal,
                   decoration: _getInputDecoration('Pilih tujuan utama'),
                   hint: Text(
                     'Pilih tujuan utama',

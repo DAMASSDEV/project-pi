@@ -122,7 +122,7 @@ class _PrivacySecurityPageState extends State<PrivacySecurityPage> {
         ),
         value: value,
         onChanged: onChanged,
-        activeColor: AppTheme.primaryColor,
+        activeThumbColor: AppTheme.primaryColor,
         activeTrackColor: AppTheme.primaryColor.withOpacity(0.15),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),

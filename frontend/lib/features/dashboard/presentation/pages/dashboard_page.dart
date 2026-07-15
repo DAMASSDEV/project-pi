@@ -276,7 +276,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildHomeTab() {
     if (_isLoading) {
       return const SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 24),
+        padding: EdgeInsets.only(bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -190,7 +190,7 @@ class PersonalizationStepOne extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildLabel('JENIS KELAMIN'),
                   DropdownButtonFormField<String>(
-                    value: gender,
+                    initialValue: gender,
                     decoration: _getInputDecoration('Pilih jenis kelamin'),
                     hint: Text(
                       'Pilih jenis kelamin',
@@ -275,7 +275,7 @@ class PersonalizationStepOne extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildLabel('TINGKAT AKTIVITAS'),
                   DropdownButtonFormField<String>(
-                    value: activity,
+                    initialValue: activity,
                     decoration: _getInputDecoration('Pilih tingkat aktivitas'),
                     hint: Text(
                       'Pilih tingkat aktivitas',

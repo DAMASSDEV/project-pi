@@ -4,7 +4,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brand_header.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
-import '../../../../core/widgets/social_button.dart';
 import '../../../../core/widgets/top_toast.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -143,10 +142,13 @@ class _SignUpPageState extends State<SignUpPage> {
                   controller: _emailController,
                   hintText: 'you@example.com',
                   prefixIcon: Icons.mail_outline_rounded,
-                  keyboardType: TextInputType.text,
+                  keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Email wajib diisi';
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                      return 'Format email tidak valid';
                     }
                     return null;
                   },

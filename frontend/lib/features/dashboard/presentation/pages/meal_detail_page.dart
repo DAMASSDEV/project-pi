@@ -470,7 +470,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
                       Expanded(
                         flex: 3,
                         child: DropdownButtonFormField<String>(
-                          value: selectedUnit,
+                          initialValue: selectedUnit,
                           decoration: const InputDecoration(labelText: 'Satuan'),
                           items: units.map((unit) {
                             return DropdownMenuItem<String>(
@@ -505,8 +505,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     Navigator.pop(context);
 
                     double unitWeight = 100.0;
-                    if (selectedUnit == 'Porsi') unitWeight = 150.0;
-                    else if (selectedUnit == 'Potong') unitWeight = 80.0;
+                    if (selectedUnit == 'Porsi') {
+                      unitWeight = 150.0;
+                    } else if (selectedUnit == 'Potong') unitWeight = 80.0;
                     else if (selectedUnit == 'Iris') unitWeight = 20.0;
                     else if (selectedUnit == 'Mangkok') unitWeight = 200.0;
                     else if (selectedUnit == 'Gelas') unitWeight = 200.0;
@@ -612,7 +613,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
                       Expanded(
                         flex: 3,
                         child: DropdownButtonFormField<String>(
-                          value: selectedUnit,
+                          initialValue: selectedUnit,
                           decoration: const InputDecoration(labelText: 'Satuan'),
                           items: units.map((unit) {
                             return DropdownMenuItem<String>(
@@ -647,8 +648,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     Navigator.pop(context);
 
                     double unitWeight = 100.0;
-                    if (selectedUnit == 'Porsi') unitWeight = 150.0;
-                    else if (selectedUnit == 'Potong') unitWeight = 80.0;
+                    if (selectedUnit == 'Porsi') {
+                      unitWeight = 150.0;
+                    } else if (selectedUnit == 'Potong') unitWeight = 80.0;
                     else if (selectedUnit == 'Iris') unitWeight = 20.0;
                     else if (selectedUnit == 'Mangkok') unitWeight = 200.0;
                     else if (selectedUnit == 'Gelas') unitWeight = 200.0;

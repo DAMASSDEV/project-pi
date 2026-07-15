@@ -91,7 +91,7 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
   ];
 
   Map<String, dynamic>? _selectedCalculatorFood;
-  double _calculatorPortionGrams = 100.0;
+  final double _calculatorPortionGrams = 100.0;
 
   @override
   void initState() {

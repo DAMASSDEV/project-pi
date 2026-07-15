@@ -101,6 +101,7 @@ class _OnboardingPageState extends State<OnboardingPage>
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final double bottomSheetHeight = screenSize.height * 0.39;
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -179,7 +180,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                   ),
                 ),
                 Positioned(
-                  bottom: 32,
+                  bottom: 32 + bottomInset,
                   left: 24,
                   right: 24,
                   child: Column(

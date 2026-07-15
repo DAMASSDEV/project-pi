@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/top_toast.dart';
-import '../pages/notifications_page.dart';
-import '../pages/privacy_security_page.dart';
-import '../pages/help_center_page.dart';
-import '../pages/connected_devices_page.dart';
 import '../pages/about_nutrify_page.dart';
 
 class SettingsMenuSectionWidget extends StatelessWidget {
