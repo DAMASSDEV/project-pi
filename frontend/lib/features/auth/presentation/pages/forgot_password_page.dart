@@ -196,7 +196,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Kami telah mengirimkan tautan pemulihan kata sandi ke email ${_emailController.text}. Silakan periksa kotak masuk atau folder spam Anda.',
+              'Kami telah mengirimkan tautan pemulihan kata sandi ke email ${_emailController.text}. Buka email tersebut dan ikuti tautannya untuk mengatur kata sandi baru.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -207,17 +207,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ),
           ),
           const Spacer(flex: 4),
-          PrimaryButton(
-            text: 'Atur Ulang Kata Sandi',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ResetPasswordPage(email: _emailController.text),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
@@ -230,165 +219,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
           const SizedBox(height: 32),
         ],
-      ),
-    );
-  }
-}
-
-class ResetPasswordPage extends StatefulWidget {
-  final String email;
-
-  const ResetPasswordPage({super.key, required this.email});
-
-  @override
-  State<ResetPasswordPage> createState() => _ResetPasswordPageState();
-}
-
-class _ResetPasswordPageState extends State<ResetPasswordPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _apiService = ApiService();
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleResetPassword() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final result = await _apiService.resetPassword(widget.email, _passwordController.text);
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (mounted) {
-      if (result['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kata sandi berhasil diperbarui! Silakan masuk kembali.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Gagal memperbarui kata sandi.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.neutralColor),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Atur Ulang Kata Sandi',
-          style: TextStyle(
-            color: AppTheme.neutralColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Masukkan kata sandi baru untuk akun Anda.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Kata Sandi Baru',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                CustomTextField(
-                  controller: _passwordController,
-                  hintText: 'Kata Sandi Baru',
-                  prefixIcon: Icons.lock_outline_rounded,
-                  isPassword: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Kata sandi wajib diisi';
-                    }
-                    if (value.length < 6) {
-                      return 'Kata sandi minimal 6 karakter';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Konfirmasi Kata Sandi Baru',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                CustomTextField(
-                  controller: _confirmPasswordController,
-                  hintText: 'Konfirmasi Kata Sandi',
-                  prefixIcon: Icons.lock_outline_rounded,
-                  isPassword: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Konfirmasi kata sandi wajib diisi';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Kata sandi tidak cocok';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 40),
-                PrimaryButton(
-                  text: 'Simpan Kata Sandi',
-                  isLoading: _isLoading,
-                  onPressed: _handleResetPassword,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
