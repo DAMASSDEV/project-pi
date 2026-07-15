@@ -29,6 +29,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
   double _portion = 1.0;
   bool _isSaving = false;
   bool _isDeleting = false;
+  Timer? _portionSaveDebounce;
 
   // Preset database of ingredient details for premium breakdown mapping
   final Map<String, Map<String, num>> _ingredientDatabase = {
@@ -193,6 +194,22 @@ class _MealDetailPageState extends State<MealDetailPage> {
     _carbs = (widget.meal['carbs'] as num?)?.toDouble() ?? 0.0;
     _fat = (widget.meal['fat'] as num?)?.toDouble() ?? 0.0;
     _ingredientsList = _parseIngredients();
+  }
+
+  @override
+  void dispose() {
+    _portionSaveDebounce?.cancel();
+    super.dispose();
+  }
+
+  void _adjustPortion(double delta) {
+    setState(() {
+      _portion = (_portion + delta).clamp(0.5, 5.0);
+    });
+    _portionSaveDebounce?.cancel();
+    _portionSaveDebounce = Timer(const Duration(milliseconds: 700), () {
+      _saveChangesToBackend();
+    });
   }
 
   String _formatPortion(double portion) {
@@ -1237,12 +1254,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                           children: [
                             _buildPortionButton(
                               icon: Icons.remove,
-                              onTap: () async {
+                              onTap: () {
                                 if (_portion > 0.5) {
-                                  setState(() {
-                                    _portion -= 0.5;
-                                  });
-                                  await _saveChangesToBackend();
+                                  _adjustPortion(-0.5);
                                 }
                               },
                             ),
@@ -1261,12 +1275,9 @@ class _MealDetailPageState extends State<MealDetailPage> {
                             ),
                             _buildPortionButton(
                               icon: Icons.add,
-                              onTap: () async {
+                              onTap: () {
                                 if (_portion < 5.0) {
-                                  setState(() {
-                                    _portion += 0.5;
-                                  });
-                                  await _saveChangesToBackend();
+                                  _adjustPortion(0.5);
                                 }
                               },
                             ),

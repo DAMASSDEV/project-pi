@@ -271,6 +271,7 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
 
     detected_name = None
     detected_confidence = 0.0
+    portion_scale = 1.0
 
     print(f"DEBUG: Memulai pemindaian gambar. Status yolo_model: {yolo_model is not None}")
     if yolo_model is not None:
@@ -285,14 +286,28 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
                         cid = int(box.cls[0])
                         nm = yolo_model.names[cid]
                         print(f"DEBUG: Box #{idx} -> Class: {nm} ({cid}), Conf: {c:.4f}")
-                        
+
                     best_box = max(boxes, key=lambda x: float(x.conf[0]))
                     conf = float(best_box.conf[0])
                     cls_id = int(best_box.cls[0])
                     detected_name = yolo_model.names[cls_id]
                     detected_confidence = conf
                     print(f"DEBUG: Box terbaik -> {detected_name} dengan Conf: {conf:.4f}")
-                    
+
+                    try:
+                        img_h, img_w = results[0].orig_shape
+                        x1, y1, x2, y2 = [float(v) for v in best_box.xyxy[0]]
+                        box_area = max(0.0, x2 - x1) * max(0.0, y2 - y1)
+                        image_area = float(img_w * img_h)
+                        area_ratio = box_area / image_area if image_area > 0 else 0.0
+                        baseline_ratio = 0.35
+                        portion_scale = area_ratio / baseline_ratio if baseline_ratio > 0 else 1.0
+                        portion_scale = max(0.7, min(portion_scale, 1.5))
+                        print(f"DEBUG: Area rasio bounding box: {area_ratio:.3f}, portion_scale: {portion_scale:.2f}")
+                    except Exception as e:
+                        print(f"DEBUG: Gagal menghitung portion_scale, pakai default 1.0: {e}")
+                        portion_scale = 1.0
+
                     if conf < CONFIDENCE_THRESHOLD:
                         print(f"DEBUG: Conf {conf:.4f} di bawah threshold {CONFIDENCE_THRESHOLD}. Diabaikan.")
                         detected_name = None
@@ -308,10 +323,10 @@ async def scan_meal_image(file: UploadFile = File(...), db: Session = Depends(ge
         return ScanResponse(
             success=True,
             food_name=scan_result.food_name,
-            calories=scan_result.calories,
-            protein=scan_result.protein,
-            carbs=scan_result.carbs,
-            fat=scan_result.fat,
+            calories=round(scan_result.calories * portion_scale, 1),
+            protein=round(scan_result.protein * portion_scale, 1),
+            carbs=round(scan_result.carbs * portion_scale, 1),
+            fat=round(scan_result.fat * portion_scale, 1),
             health_score=scan_result.health_score,
             components=scan_result.components,
             description=scan_result.description,
