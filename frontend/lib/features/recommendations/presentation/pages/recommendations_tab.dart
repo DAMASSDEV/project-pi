@@ -39,18 +39,18 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       'color': Color(0xFF108967),
     },
     {
-      'name': 'Soto Kuning',
-      'calories': 380.0,
-      'protein': 22.0,
-      'carbs': 15.0,
-      'fat': 25.0,
-      'fiber': 0.8,
-      'sodium': 620.0,
+      'name': 'Cungkring',
+      'calories': 255.0,
+      'protein': 13.5,
+      'carbs': 18.0,
+      'fat': 14.5,
+      'fiber': 1.5,
+      'sodium': 540.0,
       'desc':
-          'Soto kuning bersantan khas Bogor yang kaya akan rempah, disajikan dengan irisan daging sapi.',
+          'Ketupat dengan potongan kikil dan paru sapi empuk, disiram bumbu kacang gurih pedas khas Bogor.',
       'tip':
-          'Tinggi protein hewani. Batasi konsumsi kuah santan berlebih untuk meminimalkan asupan lemak jenuh harian Anda.',
-      'image': 'assets/image3.png',
+          'Kaya protein hewani dari kikil dan paru sapi. Batasi porsi jeroan dan imbangi dengan sayur untuk menjaga asupan lemak jenuh harian Anda.',
+      'image': 'assets/image1.png',
       'color': Color(0xFFFFA500),
     },
     {
@@ -240,14 +240,14 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
     } else if (_goal == 'Menaikkan Berat Badan') {
       return [
         'Konsumsilah makanan dengan kepadatan kalori sehat seperti kacang-kacangan, alpukat, dan keju.',
-        'Doclang dan Soto Kuning Bogor adalah pilihan bagus untuk asupan energi padat.',
+        'Doclang dan Cungkring adalah pilihan bagus untuk asupan energi padat.',
         'Makan lebih sering dengan porsi sedang (misal 5-6 kali sehari termasuk camilan).',
         'Sertakan minuman berkalori sehat seperti jus buah murni, susu, atau yogurt plain.',
       ];
     } else if (_goal == 'Meningkatkan Massa Otot') {
       return [
         'Prioritaskan asupan protein berkualitas tinggi seperti daging tanpa lemak, telur, tahu, dan tempe.',
-        'Cungkring dan Soto Kuning merupakan sumber protein hewani khas yang kaya gizi.',
+        'Cungkring merupakan sumber protein hewani khas yang kaya gizi.',
         'Konsumsi protein sekitar 20-30 gram dalam setiap sesi makan utama Anda.',
         'Cukupi kebutuhan karbohidrat kompleks sebelum dan sesudah latihan untuk energi optimal.',
       ];

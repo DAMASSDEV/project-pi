@@ -62,14 +62,14 @@ class _ChatbotTabState extends State<ChatbotTab> {
     final msg = text.toLowerCase();
     if (msg.contains('asinan')) {
       return 'Asinan Bogor memiliki estimasi sekitar 150 kkal per porsi. Hidangan segar ini kaya akan serat, Vitamin C, dan antioksidan karena terdiri dari buah-buahan dan sayuran segar dengan kuah asam pedas.';
-    } else if (msg.contains('soto') || msg.contains('kuning')) {
-      return 'Soto Kuning Bogor memiliki estimasi sekitar 350-400 kkal per porsi. Kandungan utamanya adalah protein dan lemak dari kuah santan serta kaldu daging.';
+    } else if (msg.contains('cungkring')) {
+      return 'Cungkring memiliki estimasi sekitar 255 kkal per porsi (100g). Kandungan utamanya adalah protein hewani dari kikil dan paru sapi, namun cukup tinggi lemak jenuh, jadi konsumsilah dalam porsi wajar.';
     } else if (msg.contains('telur')) {
       return 'Satu butir telur rebus mengandung sekitar 78 kkal, 6 gram protein berkualitas tinggi, serta vitamin D dan B12. Sangat baik untuk pemulihan otot.';
     } else if (msg.contains('makan') || msg.contains('ide') || msg.contains('saran')) {
       return 'Ide makan sehat tinggi protein: Dada ayam panggang dengan tumis brokoli dan nasi merah. Total kalori sekitar 450 kkal dengan kandungan protein sekitar 40g.';
     } else {
-      return 'Halo! Saya adalah asisten gizi pintar Anda. Tanyakan kepada saya tentang estimasi kalori makanan khas Bogor (seperti Asinan atau Soto Kuning), rekomendasi gizi, atau tips diet Anda.';
+      return 'Halo! Saya adalah asisten gizi pintar Anda. Tanyakan kepada saya tentang estimasi kalori makanan khas Bogor (seperti Asinan atau Cungkring), rekomendasi gizi, atau tips diet Anda.';
     }
   }
 

@@ -505,9 +505,13 @@ class HistoryTabState extends State<HistoryTab> {
                         ),
                 ),
                 const SizedBox(height: 28),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24),
-                  child: HistoryInsightCard(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: HistoryInsightCard(
+                    calProgress: calProgress,
+                    totalCalories: _totalCalories,
+                    rangeLabel: _selectedRange,
+                  ),
                 ),
               ],
             ],

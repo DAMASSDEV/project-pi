@@ -346,7 +346,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                     runSpacing: 8,
                     children:
                         [
-                          'Soto Kuning Bogor',
+                          'Cungkring',
                           'Asinan Bogor',
                           'Nasi Goreng Spesial',
                           'Chicken Salad Bowl',
@@ -471,13 +471,13 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
   Future<void> _captureAndAnalyze() async {
     if (_isScanning) return;
     if (_isDemoMode) {
-      String foodName = 'Soto Kuning Bogor';
+      String foodName = 'Cungkring';
       if (_demoImageIndex == 0) {
         foodName = 'Doclang';
       } else if (_demoImageIndex == 1) {
         foodName = 'Asinan Bogor';
       } else if (_demoImageIndex == 2) {
-        foodName = 'Soto Kuning Bogor';
+        foodName = 'Cungkring';
       }
       _startAnalysisFlow(foodName: foodName);
     } else {

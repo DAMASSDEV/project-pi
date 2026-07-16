@@ -2,31 +2,72 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class HistoryInsightCard extends StatelessWidget {
-  const HistoryInsightCard({super.key});
+  final double calProgress;
+  final double totalCalories;
+  final String rangeLabel;
+
+  const HistoryInsightCard({
+    super.key,
+    required this.calProgress,
+    required this.totalCalories,
+    required this.rangeLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
+    IconData icon;
+    IconData badgeIcon;
+    Color accentColor;
+    String headline;
+    String tip;
+
+    if (totalCalories <= 0) {
+      icon = Icons.info_outline_rounded;
+      badgeIcon = Icons.remove_rounded;
+      accentColor = Colors.grey.shade500;
+      headline = 'Belum ada catatan makanan untuk periode ini.';
+      tip = 'Yuk mulai catat makanan kamu agar insight-nya muncul di sini.';
+    } else if (calProgress >= 1.0) {
+      icon = Icons.spa_rounded;
+      badgeIcon = Icons.check_rounded;
+      accentColor = AppTheme.primaryColor;
+      headline = 'Kalori kamu sudah mencapai target!';
+      tip = 'Kerja bagus! Pertahankan pola makan sehat ini ya.';
+    } else if (calProgress >= 0.7) {
+      icon = Icons.spa_rounded;
+      badgeIcon = Icons.trending_up_rounded;
+      accentColor = AppTheme.primaryColor;
+      headline = 'Kalori kamu sudah mendekati target!';
+      tip = 'Coba tambahkan serat dari sayur dan buah untuk keseimbangan nutrisi.';
+    } else {
+      icon = Icons.restaurant_rounded;
+      badgeIcon = Icons.priority_high_rounded;
+      accentColor = Colors.orange.shade700;
+      headline = 'Kalori kamu masih jauh dari target.';
+      tip = 'Yuk lengkapi asupan makananmu supaya kebutuhan gizi harian tetap terpenuhi.';
+    }
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFFF0FAF7),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.15),
+          color: accentColor.withOpacity(0.15),
         ),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'INSIGHT HARI INI',
+              'INSIGHT ${rangeLabel.toUpperCase()}',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
-                color: AppTheme.primaryColor,
+                color: accentColor,
                 letterSpacing: 1.0,
               ),
             ),
@@ -42,9 +83,9 @@ class HistoryInsightCard extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.spa_rounded,
-                  color: AppTheme.primaryColor,
+                child: Icon(
+                  icon,
+                  color: accentColor,
                   size: 32,
                 ),
               ),
@@ -54,12 +95,12 @@ class HistoryInsightCard extends StatelessWidget {
                 child: Container(
                   width: 20,
                   height: 20,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.primaryColor,
+                  decoration: BoxDecoration(
+                    color: accentColor,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.check,
+                  child: Icon(
+                    badgeIcon,
                     color: Colors.white,
                     size: 12,
                   ),
@@ -68,9 +109,10 @@ class HistoryInsightCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Kalori kamu sudah mendekati target!',
-            style: TextStyle(
+          Text(
+            headline,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: AppTheme.neutralColor,
@@ -78,7 +120,7 @@ class HistoryInsightCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Coba tambahkan serat dari sayur dan buah untuk keseimbangan nutrisi.',
+            tip,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
