@@ -4,11 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/widgets/meal_image.dart';
+import '../../../../core/widgets/top_toast.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ScannerTab extends StatefulWidget {
   final VoidCallback? onScanSaved;
-  const ScannerTab({super.key, this.onScanSaved});
+  final DateTime? selectedDate;
+  const ScannerTab({super.key, this.onScanSaved, this.selectedDate});
 
   @override
   State<ScannerTab> createState() => _ScannerTabState();
@@ -433,13 +435,10 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                         final String foodName =
                             selectedPreset ?? textController.text.trim();
                         if (foodName.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Silakan pilih atau ketik nama makanan.',
-                              ),
-                              backgroundColor: Colors.redAccent,
-                            ),
+                          showTopToast(
+                            context,
+                            'Silakan pilih atau ketik nama makanan.',
+                            isError: true,
                           );
                           return;
                         }
@@ -488,12 +487,8 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
         final file = await _cameraController!.takePicture();
         _startAnalysisFlow(filePath: file.path);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Gagal mengambil gambar dari kamera'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        if (!mounted) return;
+        showTopToast(context, 'Gagal mengambil gambar dari kamera', isError: true);
       }
     }
   }
@@ -508,12 +503,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gagal memilih gambar dari galeri'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      showTopToast(context, 'Gagal memilih gambar dari galeri', isError: true);
     }
   }
 
@@ -557,11 +547,10 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
           _showResultSheet(result);
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Gagal memindai makanan'),
-            backgroundColor: Colors.redAccent,
-          ),
+        showTopToast(
+          context,
+          result['message'] ?? 'Gagal memindai makanan',
+          isError: true,
         );
       }
     } catch (e) {
@@ -569,12 +558,7 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
       setState(() {
         _isScanning = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Terjadi kesalahan saat memproses foto'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      showTopToast(context, 'Terjadi kesalahan saat memproses foto', isError: true);
     }
   }
 
@@ -895,12 +879,12 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                       child: ElevatedButton(
                         onPressed: () async {
                           final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(context);
                           final now = DateTime.now();
+                          final targetDate = widget.selectedDate ?? now;
                           final timeString =
                               "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
                           final timestamp =
-                              "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} $timeString";
+                              "${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')} $timeString";
 
                           final prefs = await SharedPreferences.getInstance();
                           final email =
@@ -925,26 +909,19 @@ class _ScannerTabState extends State<ScannerTab> with WidgetsBindingObserver {
                           if (!mounted) return;
 
                           if (res['success'] == true) {
-                            navigator.pop();
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Makanan berhasil disimpan ke jurnal harian.',
-                                ),
-                                backgroundColor: AppTheme.primaryColor,
-                              ),
+                            showTopToast(
+                              context,
+                              'Makanan berhasil disimpan ke jurnal harian.',
                             );
+                            navigator.pop();
                             if (widget.onScanSaved != null) {
                               widget.onScanSaved!();
                             }
                           } else {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  res['message'] ?? 'Gagal menyimpan makanan',
-                                ),
-                                backgroundColor: Colors.redAccent,
-                              ),
+                            showTopToast(
+                              context,
+                              res['message'] ?? 'Gagal menyimpan makanan',
+                              isError: true,
                             );
                           }
                         },

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Text
 from app.core.database import Base
 
 class MealLog(Base):
@@ -17,3 +17,4 @@ class MealLog(Base):
     image_path = Column(String, nullable=False)
     is_manual = Column(Boolean, default=False)
     portion = Column(Float, nullable=False, default=1.0)
+    ingredients_detail = Column(Text, nullable=True)

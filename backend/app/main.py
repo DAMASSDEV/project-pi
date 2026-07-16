@@ -110,6 +110,16 @@ def migrate_password_reset_created_at_column():
     except Exception:
         pass
 
+def migrate_meal_logs_ingredients_detail_column():
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE meal_logs ADD COLUMN ingredients_detail TEXT"))
+            conn.commit()
+            print("Migration: added 'ingredients_detail' column to meal_logs.")
+    except Exception:
+        pass
+
 @app.on_event("startup")
 def on_startup():
     retries = 10
@@ -119,6 +129,7 @@ def on_startup():
             print("Successfully connected to the database and created tables.")
             migrate_meal_logs_portion_column()
             migrate_password_reset_created_at_column()
+            migrate_meal_logs_ingredients_detail_column()
             populate_foods()
             break
         except OperationalError as e:

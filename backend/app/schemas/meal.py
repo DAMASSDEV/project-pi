@@ -13,6 +13,7 @@ class MealLogCreate(BaseModel):
     image_path: str
     is_manual: bool = False
     portion: float = 1.0
+    ingredients_detail: str | None = None
 
 class MealLogResponse(BaseModel):
     id: int
@@ -28,6 +29,7 @@ class MealLogResponse(BaseModel):
     image_path: str
     is_manual: bool
     portion: float
+    ingredients_detail: str | None = None
 
     class Config:
         from_attributes = True

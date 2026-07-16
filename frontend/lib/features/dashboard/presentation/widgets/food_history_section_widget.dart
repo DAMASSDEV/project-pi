@@ -81,7 +81,11 @@ class FoodHistorySectionWidget extends StatelessWidget {
               itemBuilder: (context, index) {
                 final meal = meals[index];
                 final foodName = meal['food_name'] ?? 'Makanan';
-                final calories = meal['calories']?.toStringAsFixed(0) ?? '0';
+                final portion = (meal['portion'] as num?)?.toDouble() ?? 1.0;
+                final calories =
+                    (((meal['calories'] as num?)?.toDouble() ?? 0.0) *
+                            portion)
+                        .toStringAsFixed(0);
                 final rawTimestamp = meal['timestamp'] ?? 'Hari Ini';
                 final timestamp = formatFriendlyTimestamp(rawTimestamp);
                 final components = meal['components'] ?? '';

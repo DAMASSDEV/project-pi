@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brand_header.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/top_toast.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -45,12 +46,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           _isSuccess = true;
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Gagal mengirim email pemulihan.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.redAccent,
-          ),
+        showTopToast(
+          context,
+          result['message'] ?? 'Gagal mengirim email pemulihan.',
+          isError: true,
         );
       }
     }

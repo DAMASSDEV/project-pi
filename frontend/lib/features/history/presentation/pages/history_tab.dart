@@ -7,6 +7,7 @@ import '../widgets/food_log_card.dart';
 import '../widgets/history_insight_card.dart';
 import '../../../../core/services/date_helper.dart';
 import '../../../dashboard/presentation/pages/meal_detail_page.dart';
+import '../../../../core/widgets/top_toast.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -105,8 +106,9 @@ class _HistoryTabState extends State<HistoryTab> {
     double cal = 0.0;
     double prot = 0.0;
     for (var m in filtered) {
-      cal += (m['calories'] as num?)?.toDouble() ?? 0.0;
-      prot += (m['protein'] as num?)?.toDouble() ?? 0.0;
+      final portion = (m['portion'] as num?)?.toDouble() ?? 1.0;
+      cal += ((m['calories'] as num?)?.toDouble() ?? 0.0) * portion;
+      prot += ((m['protein'] as num?)?.toDouble() ?? 0.0) * portion;
     }
 
     _meals = filtered;
@@ -151,23 +153,15 @@ class _HistoryTabState extends State<HistoryTab> {
                 final res = await _apiService.deleteMeal(mealId);
                 if (res['success'] == true) {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Catatan makanan berhasil dihapus.'),
-                        backgroundColor: AppTheme.primaryColor,
-                      ),
-                    );
+                    showTopToast(context, 'Catatan makanan berhasil dihapus.');
                   }
                   _fetchMeals();
                 } else {
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          res['message'] ?? 'Gagal menghapus makanan',
-                        ),
-                        backgroundColor: Colors.redAccent,
-                      ),
+                    showTopToast(
+                      context,
+                      res['message'] ?? 'Gagal menghapus makanan',
+                      isError: true,
                     );
                   }
                 }
@@ -422,13 +416,22 @@ class _HistoryTabState extends State<HistoryTab> {
                             final meal = _meals[index];
                             final mealId = meal['id'] as int;
                             final foodName = meal['food_name'] ?? 'Makanan';
+                            final portion =
+                                (meal['portion'] as num?)?.toDouble() ?? 1.0;
                             final calories =
-                                meal['calories']?.toStringAsFixed(0) ?? '0';
+                                ((meal['calories'] as num?)?.toDouble() ??
+                                        0.0) *
+                                    portion;
                             final protein =
-                                meal['protein']?.toStringAsFixed(0) ?? '0';
+                                ((meal['protein'] as num?)?.toDouble() ??
+                                        0.0) *
+                                    portion;
                             final carbs =
-                                meal['carbs']?.toStringAsFixed(0) ?? '0';
-                            final fat = meal['fat']?.toStringAsFixed(0) ?? '0';
+                                ((meal['carbs'] as num?)?.toDouble() ?? 0.0) *
+                                portion;
+                            final fat =
+                                ((meal['fat'] as num?)?.toDouble() ?? 0.0) *
+                                portion;
                             final rawTimestamp =
                                 meal['timestamp'] ?? 'Hari Ini';
                             final timestamp = formatFriendlyTimestamp(
@@ -463,10 +466,10 @@ class _HistoryTabState extends State<HistoryTab> {
                                         ? 'Input Manual'
                                         : '$componentCount komponen terdeteksi',
                                     isManual: isManual,
-                                    calories: calories,
-                                    protein: protein,
-                                    carbs: carbs,
-                                    fat: fat,
+                                    calories: calories.toStringAsFixed(0),
+                                    protein: protein.toStringAsFixed(0),
+                                    carbs: carbs.toStringAsFixed(0),
+                                    fat: fat.toStringAsFixed(0),
                                   ),
                                   Positioned(
                                     top: 12,

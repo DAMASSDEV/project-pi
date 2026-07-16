@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/date_helper.dart';
 import '../../../../core/widgets/meal_image.dart';
+import '../../../../core/widgets/top_toast.dart';
 
 class MealDetailPage extends StatefulWidget {
   final Map<String, dynamic> meal;
@@ -194,8 +196,17 @@ class _MealDetailPageState extends State<MealDetailPage> {
     _carbs = (widget.meal['carbs'] as num?)?.toDouble() ?? 0.0;
     _fat = (widget.meal['fat'] as num?)?.toDouble() ?? 0.0;
     _portion = (widget.meal['portion'] as num?)?.toDouble() ?? 1.0;
-    _ingredientsList = _parseIngredients();
-    _refineIngredientsFromDatabase();
+
+    final savedDetail = widget.meal['ingredients_detail'] as String?;
+    if (savedDetail != null && savedDetail.isNotEmpty) {
+      final decoded = jsonDecode(savedDetail) as List;
+      _ingredientsList = decoded
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    } else {
+      _ingredientsList = _parseIngredients();
+      _refineIngredientsFromDatabase();
+    }
   }
 
   Future<void> _refineIngredientsFromDatabase() async {
@@ -339,19 +350,14 @@ class _MealDetailPageState extends State<MealDetailPage> {
       'fat': _fat,
       'components': componentsStr,
       'portion': _portion,
+      'ingredients_detail': jsonEncode(_ingredientsList),
     };
 
     try {
       final res = await _apiService.updateMeal(mealId, payload);
       if (res['success'] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Catatan makanan berhasil diperbarui.'),
-              backgroundColor: AppTheme.primaryColor,
-              duration: Duration(milliseconds: 800),
-            ),
-          );
+          showTopToast(context, 'Catatan makanan berhasil diperbarui.');
         }
 
         setState(() {
@@ -368,12 +374,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal menyimpan perubahan: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        showTopToast(context, 'Gagal menyimpan perubahan: $e', isError: true);
       }
     } finally {
       setState(() {
@@ -1059,12 +1060,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
                   final res = await _apiService.deleteMeal(mealId);
                   if (res['success'] == true) {
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Catatan makanan berhasil dihapus.'),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
+                      showTopToast(context, 'Catatan makanan berhasil dihapus.');
                       if (widget.onDeleteSuccess != null) {
                         widget.onDeleteSuccess!();
                       }
@@ -1075,13 +1071,10 @@ class _MealDetailPageState extends State<MealDetailPage> {
                       _isDeleting = false;
                     });
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            res['message'] ?? 'Gagal menghapus catatan.',
-                          ),
-                          backgroundColor: Colors.redAccent,
-                        ),
+                      showTopToast(
+                        context,
+                        res['message'] ?? 'Gagal menghapus catatan.',
+                        isError: true,
                       );
                     }
                   }
@@ -1090,12 +1083,7 @@ class _MealDetailPageState extends State<MealDetailPage> {
                     _isDeleting = false;
                   });
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error: $e'),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
+                    showTopToast(context, 'Error: $e', isError: true);
                   }
                 }
               },

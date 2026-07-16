@@ -167,10 +167,11 @@ class _DashboardPageState extends State<DashboardPage> {
     double fat = 0.0;
 
     for (var m in filtered) {
-      cal += (m['calories'] as num?)?.toDouble() ?? 0.0;
-      carb += (m['carbs'] as num?)?.toDouble() ?? 0.0;
-      prot += (m['protein'] as num?)?.toDouble() ?? 0.0;
-      fat += (m['fat'] as num?)?.toDouble() ?? 0.0;
+      final portion = (m['portion'] as num?)?.toDouble() ?? 1.0;
+      cal += ((m['calories'] as num?)?.toDouble() ?? 0.0) * portion;
+      carb += ((m['carbs'] as num?)?.toDouble() ?? 0.0) * portion;
+      prot += ((m['protein'] as num?)?.toDouble() ?? 0.0) * portion;
+      fat += ((m['fat'] as num?)?.toDouble() ?? 0.0) * portion;
     }
 
     setState(() {
@@ -482,10 +483,17 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(2),
         child: GestureDetector(
           onTap: () {
+            final now = DateTime.now();
+            final selectedDate = DateTime(
+              now.year,
+              now.month,
+              _selectedCalendarDay,
+            );
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ScannerTab(
+                  selectedDate: selectedDate,
                   onScanSaved: () {
                     _fetchMeals();
                   },

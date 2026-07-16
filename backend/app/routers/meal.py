@@ -164,7 +164,8 @@ async def save_meal(
         timestamp=payload.timestamp,
         image_path=payload.image_path,
         is_manual=payload.is_manual,
-        portion=payload.portion
+        portion=payload.portion,
+        ingredients_detail=payload.ingredients_detail
     )
     db.add(db_meal)
     db.commit()
@@ -234,6 +235,8 @@ async def update_meal(
         db_meal.components = payload["components"]
     if "portion" in payload:
         db_meal.portion = payload["portion"]
+    if "ingredients_detail" in payload:
+        db_meal.ingredients_detail = payload["ingredients_detail"]
 
     db.commit()
     db.refresh(db_meal)
@@ -249,7 +252,8 @@ async def update_meal(
         "timestamp": db_meal.timestamp,
         "image_path": db_meal.image_path,
         "is_manual": db_meal.is_manual,
-        "portion": db_meal.portion
+        "portion": db_meal.portion,
+        "ingredients_detail": db_meal.ingredients_detail
     }}
 
 import os

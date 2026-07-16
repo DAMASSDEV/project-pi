@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/top_toast.dart';
 
 class ConnectedDevicesPage extends StatefulWidget {
   const ConnectedDevicesPage({super.key});
@@ -27,12 +28,7 @@ class _ConnectedDevicesPageState extends State<ConnectedDevicesPage> {
       setState(() {
         _deviceStatus[deviceName] = 'disconnected';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$deviceName berhasil diputuskan.'),
-          backgroundColor: Colors.grey.shade800,
-        ),
-      );
+      showTopToast(context, '$deviceName berhasil diputuskan.');
     } else {
       setState(() {
         _deviceLoading[deviceName] = true;
@@ -44,12 +40,7 @@ class _ConnectedDevicesPageState extends State<ConnectedDevicesPage> {
             _deviceLoading[deviceName] = false;
             _deviceStatus[deviceName] = 'connected';
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$deviceName berhasil dihubungkan!'),
-              backgroundColor: AppTheme.primaryColor,
-            ),
-          );
+          showTopToast(context, '$deviceName berhasil dihubungkan!');
         }
       });
     }
