@@ -10,13 +10,15 @@ import '../../../dashboard/presentation/pages/meal_detail_page.dart';
 import '../../../../core/widgets/top_toast.dart';
 
 class HistoryTab extends StatefulWidget {
-  const HistoryTab({super.key});
+  final VoidCallback? onMealsChanged;
+
+  const HistoryTab({super.key, this.onMealsChanged});
 
   @override
-  State<HistoryTab> createState() => _HistoryTabState();
+  State<HistoryTab> createState() => HistoryTabState();
 }
 
-class _HistoryTabState extends State<HistoryTab> {
+class HistoryTabState extends State<HistoryTab> {
   final ApiService _apiService = ApiService();
   String _selectedRange = 'Semua';
   String _selectedSort = 'Terbaru';
@@ -29,10 +31,10 @@ class _HistoryTabState extends State<HistoryTab> {
   @override
   void initState() {
     super.initState();
-    _fetchMeals();
+    fetchMeals();
   }
 
-  Future<void> _fetchMeals() async {
+  Future<void> fetchMeals() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final email = prefs.getString('logged_in_email') ?? 'guest@nutrify.com';
@@ -155,7 +157,8 @@ class _HistoryTabState extends State<HistoryTab> {
                   if (mounted) {
                     showTopToast(context, 'Catatan makanan berhasil dihapus.');
                   }
-                  _fetchMeals();
+                  fetchMeals();
+                  widget.onMealsChanged?.call();
                 } else {
                   if (mounted) {
                     showTopToast(
@@ -193,7 +196,7 @@ class _HistoryTabState extends State<HistoryTab> {
     return Container(
       color: Colors.white,
       child: RefreshIndicator(
-        onRefresh: _fetchMeals,
+        onRefresh: fetchMeals,
         color: AppTheme.primaryColor,
         backgroundColor: Colors.white,
         child: SingleChildScrollView(
@@ -451,7 +454,10 @@ class _HistoryTabState extends State<HistoryTab> {
                                   MaterialPageRoute(
                                     builder: (context) => MealDetailPage(
                                       meal: meal,
-                                      onDeleteSuccess: _fetchMeals,
+                                      onDeleteSuccess: () {
+                                        fetchMeals();
+                                        widget.onMealsChanged?.call();
+                                      },
                                     ),
                                   ),
                                 );

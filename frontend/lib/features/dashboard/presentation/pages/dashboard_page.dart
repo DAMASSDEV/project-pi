@@ -23,6 +23,8 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final GlobalKey<HistoryTabState> _historyTabKey =
+      GlobalKey<HistoryTabState>();
   int _currentIndex = 0;
   late double targetCalories;
   late String goalText;
@@ -221,6 +223,7 @@ class _DashboardPageState extends State<DashboardPage> {
           _isLoading = false;
         });
         _filterMealsForSelectedDay();
+        _historyTabKey.currentState?.fetchMeals();
       }
     } catch (_) {
       if (mounted) {
@@ -245,7 +248,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   _buildHomeTab(),
                   const RecommendationsTab(),
-                  const HistoryTab(),
+                  HistoryTab(key: _historyTabKey, onMealsChanged: _fetchMeals),
                   const ProfileTab(),
                 ],
               ),
